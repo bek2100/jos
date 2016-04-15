@@ -55,10 +55,23 @@ mon_kerninfo(int argc, char **argv, struct Trapframe *tf)
 	return 0;
 }
 
+static __inline uint32_t read_ebp(void) __attribute__((always_inline));
+
 int
 mon_backtrace(int argc, char **argv, struct Trapframe *tf)
 {
-	// Your code here.
+	int *frame = (int*)read_ebp();
+
+	while (frame)
+	{
+		struct Eipdebuginfo info = {0};
+
+		cprintf("ebp %08x  eip %08x  args %08x %08x %08x %08x %08x\n", frame, frame[1], frame[2], frame[3], frame[4], frame[5], frame[6]);
+		if (debuginfo_eip(frame[1], &info) < 0) panic("info");
+		cprintf("      %s:%d: %.*s+%d\n", info.eip_file, info.eip_line, info.eip_fn_namelen, info.eip_fn_name, frame[1]-info.eip_fn_addr);
+
+		frame = (int*)*frame;
+	}
 	return 0;
 }
 
