@@ -182,6 +182,7 @@ struct PageInfo {
 	// boot_alloc do not have valid reference count fields.
 
 	uint16_t pp_ref;
+	uint16_t  pp_size;
 };
 
 #endif /* !__ASSEMBLER__ */
