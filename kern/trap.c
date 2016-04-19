@@ -58,6 +58,40 @@ static const char *trapname(int trapno)
 	return "(unknown trap)";
 }
 
+void div_handler();
+void debug_handler();
+void NULL1_handler();
+void bp_handler();
+void overflow_handler();
+void bounds_handler();
+void invalid_handler();
+void cocpunotavl_handler();
+void syserr_handler();
+void segover_handler();
+void TSS_handler();
+void segpres_handler();
+void stack_handler();
+void gp_handler();
+void pf_handler();
+void NULL2_handler();
+void cocpu_handler();
+void NULL3_handler();
+void NULL4_handler();
+void NULL5_handler();
+void NULL6_handler();
+void NULL7_handler();
+void NULL8_handler();
+void NULL9_handler();
+void NULLa_handler();
+void NULLb_handler();
+void NULLc_handler();
+void NULLd_handler();
+void NULLe_handler();
+void NULLf_handler();
+void NULL10_handler();
+void NULL11_handler();
+
+void syscall_handler();
 
 void
 trap_init(void)
@@ -65,6 +99,40 @@ trap_init(void)
 	extern struct Segdesc gdt[];
 
 	// LAB 3: Your code here.
+	SETGATE(idt[ 0], 0, GD_KT, div_handler,         0);
+	SETGATE(idt[ 1], 1, GD_KT, debug_handler,       3);
+	SETGATE(idt[ 2], 0, GD_KT, NULL1_handler,       0);
+	SETGATE(idt[ 3], 1, GD_KT, bp_handler,          3);
+	SETGATE(idt[ 4], 1, GD_KT, overflow_handler,    0);
+	SETGATE(idt[ 5], 0, GD_KT, bounds_handler,      0);
+	SETGATE(idt[ 6], 0, GD_KT, invalid_handler,     0);
+	SETGATE(idt[ 7], 0, GD_KT, cocpunotavl_handler, 0);
+	SETGATE(idt[ 8], 0, GD_KT, syserr_handler,      0);
+	SETGATE(idt[ 9], 0, GD_KT, segover_handler,     0);
+	SETGATE(idt[10], 0, GD_KT, TSS_handler,         0);
+	SETGATE(idt[11], 0, GD_KT, segpres_handler,     0);
+	SETGATE(idt[12], 0, GD_KT, stack_handler,       0);
+	SETGATE(idt[13], 0, GD_KT, gp_handler,          0);
+	SETGATE(idt[14], 0, GD_KT, pf_handler,          0);
+	SETGATE(idt[15], 0, GD_KT, NULL2_handler,       0);
+	SETGATE(idt[16], 0, GD_KT, cocpu_handler,       0);
+	SETGATE(idt[17], 0, GD_KT, NULL3_handler,       0);
+	SETGATE(idt[18], 0, GD_KT, NULL4_handler,       0);
+	SETGATE(idt[19], 0, GD_KT, NULL5_handler,       0);
+	SETGATE(idt[20], 0, GD_KT, NULL6_handler,       0);
+	SETGATE(idt[21], 0, GD_KT, NULL7_handler,       0);
+	SETGATE(idt[22], 0, GD_KT, NULL8_handler,       0);
+	SETGATE(idt[23], 0, GD_KT, NULL9_handler,       0);
+	SETGATE(idt[24], 0, GD_KT, NULLa_handler,       0);
+	SETGATE(idt[25], 0, GD_KT, NULLb_handler,       0);
+	SETGATE(idt[26], 0, GD_KT, NULLc_handler,       0);
+	SETGATE(idt[27], 0, GD_KT, NULLd_handler,       0);
+	SETGATE(idt[28], 0, GD_KT, NULLe_handler,       0);
+	SETGATE(idt[29], 0, GD_KT, NULLf_handler,       0);
+	SETGATE(idt[30], 0, GD_KT, NULL10_handler,      0);
+	SETGATE(idt[31], 0, GD_KT, NULL11_handler,      0);
+
+	SETGATE(idt[T_SYSCALL], 0, GD_KT, syscall_handler, 3);
 
 	// Per-CPU setup 
 	trap_init_percpu();
@@ -143,14 +211,33 @@ trap_dispatch(struct Trapframe *tf)
 {
 	// Handle processor exceptions.
 	// LAB 3: Your code here.
-
-	// Unexpected trap: The user process or the kernel has a bug.
-	print_trapframe(tf);
-	if (tf->tf_cs == GD_KT)
-		panic("unhandled trap in kernel");
-	else {
-		env_destroy(curenv);
-		return;
+	switch (tf->tf_trapno)
+	{
+	case T_PGFLT: {
+		page_fault_handler(tf);		
+		} break;
+	case T_BRKPT: {
+		monitor(tf);
+		} break;
+	case T_SYSCALL: {
+		uint32_t ans = syscall(	tf->tf_regs.reg_eax,
+					tf->tf_regs.reg_edx,
+					tf->tf_regs.reg_ecx,
+					tf->tf_regs.reg_ebx,
+					tf->tf_regs.reg_edi,
+					tf->tf_regs.reg_esi);
+		tf->tf_regs.reg_eax = ans;
+		} break;
+	default: {
+		// Unexpected trap: The user process or the kernel has a bug.
+		print_trapframe(tf);
+		if (tf->tf_cs == GD_KT)
+			panic("unhandled trap in kernel");
+		else {
+			env_destroy(curenv);
+			return;
+		}
+		} break;
 	}
 }
 
@@ -202,6 +289,7 @@ page_fault_handler(struct Trapframe *tf)
 	fault_va = rcr2();
 
 	// Handle kernel-mode page faults.
+	if ((tf->tf_cs & 3) == 0) panic("pf in kernel %p", fault_va);
 
 	// LAB 3: Your code here.
 
