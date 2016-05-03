@@ -48,9 +48,70 @@
  * Lab 3: Your code here for generating entry points for the different traps.
  */
 
+TRAPHANDLER_NOEC(div_handler,         0)
+TRAPHANDLER_NOEC(debug_handler,       1)
+TRAPHANDLER_NOEC(NULL1_handler,       2)
+TRAPHANDLER_NOEC(bp_handler,          3)
+TRAPHANDLER_NOEC(overflow_handler,    4)
+TRAPHANDLER_NOEC(bounds_handler,      5)
+TRAPHANDLER_NOEC(invalid_handler,     6)
+TRAPHANDLER_NOEC(cocpunotavl_handler, 7)
+TRAPHANDLER     (syserr_handler,      8)
+TRAPHANDLER_NOEC(segover_handler,     9)
+TRAPHANDLER     (TSS_handler,        10)
+TRAPHANDLER     (segpres_handler,    11)
+TRAPHANDLER     (stack_handler,      12)
+TRAPHANDLER     (gp_handler,         13)
+TRAPHANDLER     (pf_handler,         14)
+TRAPHANDLER_NOEC(NULL2_handler,      15)
+TRAPHANDLER_NOEC(cocpu_handler,      16)
+TRAPHANDLER_NOEC(NULL3_handler,      17)
+TRAPHANDLER_NOEC(NULL4_handler,      18)
+TRAPHANDLER_NOEC(NULL5_handler,      19)
+TRAPHANDLER_NOEC(NULL6_handler,      20)
+TRAPHANDLER_NOEC(NULL7_handler,      21)
+TRAPHANDLER_NOEC(NULL8_handler,      22)
+TRAPHANDLER_NOEC(NULL9_handler,      23)
+TRAPHANDLER_NOEC(NULLa_handler,      24)
+TRAPHANDLER_NOEC(NULLb_handler,      25)
+TRAPHANDLER_NOEC(NULLc_handler,      26)
+TRAPHANDLER_NOEC(NULLd_handler,      27)
+TRAPHANDLER_NOEC(NULLe_handler,      28)
+TRAPHANDLER_NOEC(NULLf_handler,      29)
+TRAPHANDLER_NOEC(NULL10_handler,     30)
+TRAPHANDLER_NOEC(NULL11_handler,     31)
 
+TRAPHANDLER_NOEC(syscall_handler, T_SYSCALL)
+
+.globl sysenter_handler
+.type sysenter_handler, @function
+.align 2;
+sysenter_handler:
+	push $0
+	push %edi
+	push %ebx
+	push %ecx
+	push %edx
+	push %eax
+	call syscall
+	add $24, %esp
+
+	mov %esi, %edx
+	mov %ebp, %ecx
+	sysexit
 
 /*
  * Lab 3: Your code here for _alltraps
  */
-
+.globl _alltraps
+.type _alltraps, @function
+.align 2;
+_alltraps:
+	push %ds
+	push %es
+	pusha
+	mov $(GD_KD), %eax
+	mov %ax, %es
+	mov %ax, %ds
+	pushl %esp
+	call trap
