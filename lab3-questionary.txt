@@ -61,10 +61,22 @@ nobody calls the entry point via "call" opcode so when monitor look for the eip 
 ====================================================================
 === Q What challenge(s) have you chosen to implement? (specify
 ===   challenge numbers separated by spaces, if more than one)
+3
 
 === Q If the challenge requires changing the kernel source, list the
 ===   files which you have changed/added during implementation.
 ===   (one file per line, relative to lab directory containing .git/)
+kern/trap.c kern/trapentry.S lib/syscall.c inc/x86.h
 
 === Q Describe you solution.
 ===   (free form, up to 500 words, don't need to use all 500!)
+We add handler for sysenter and register it in trap_init.
+In order to init it we need to write 3 MSRs (and add the wrmsr function):
+ * 174H is the code segment selector (the cpu alse calculates the stack segment selector using this value)
+ * 175H is the stack for the syscall (the kernel stack)
+ * 176H is the address to run (the handler)
+
+The handler gets the parameters by regiters and make a call to syscall function. After that, he prepare the parameters and call sysexit.
+
+Finally, we changed lib/syscall wrapper to use sysenter if there is 4 or less parameters.
+We used the proposed registers layout.

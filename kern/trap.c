@@ -92,6 +92,7 @@ void NULL10_handler();
 void NULL11_handler();
 
 void syscall_handler();
+void sysenter_handler();
 
 void
 trap_init(void)
@@ -133,6 +134,10 @@ trap_init(void)
 	SETGATE(idt[31], 0, GD_KT, NULL11_handler,      0);
 
 	SETGATE(idt[T_SYSCALL], 0, GD_KT, syscall_handler, 3);
+
+	wrmsr(0x174,GD_KT,0);
+	wrmsr(0x175,KSTACKTOP,0);
+	wrmsr(0x176,sysenter_handler,0);
 
 	// Per-CPU setup 
 	trap_init_percpu();
