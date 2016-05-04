@@ -6,7 +6,6 @@
 
 #include <kern/picirq.h>
 
-
 ###################################################################
 # exceptions/interrupts
 ###################################################################
@@ -83,10 +82,19 @@ TRAPHANDLER_NOEC(NULL11_handler,     31)
 
 TRAPHANDLER_NOEC(syscall_handler, T_SYSCALL)
 
+
 .globl sysenter_handler
 .type sysenter_handler, @function
 .align 2;
 sysenter_handler:
+	push %eax
+	push %ecx
+	push %edx
+	call trap_lock_kernel
+	pop  %edx
+	pop  %ecx
+	pop  %eax
+
 	push $0
 	push %edi
 	push %ebx
@@ -95,6 +103,14 @@ sysenter_handler:
 	push %eax
 	call syscall
 	add $24, %esp
+
+	push %eax
+	push %ecx
+	push %edx
+	call trap_unlock_kernel
+	pop  %edx
+	pop  %ecx
+	pop  %eax
 
 	mov %esi, %edx
 	mov %ebp, %ecx

@@ -122,7 +122,7 @@ env_init(void)
 	unsigned int i;
 	for (i = 0; i < NENV; ++i)
 	{
-		envs[i] .env_pgdir = NULL;
+		envs[i].env_pgdir = NULL;
 		envs[i].env_runs = 0;
 		envs[i].env_status = ENV_FREE;
 		envs[i].env_type = ENV_TYPE_USER;
@@ -527,7 +527,7 @@ env_run(struct Env *e)
 
 	//	   5. Use lcr3() to switch to its address space.
 	lcr3(PADDR(e->env_pgdir));
-
+	unlock_kernel();
 	// Step 2: Use env_pop_tf() to restore the environment's
 	//	   registers and drop into user mode in the
 	//	   environment.

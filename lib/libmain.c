@@ -17,8 +17,12 @@ libmain(int argc, char **argv)
 	envid_t id = sys_getenvid();
 	while (thisenv->env_id != id)
 	{
-		if (thisenv >= envs + NENV) exit();
-		 ++thisenv;
+		++thisenv;
+		if (thisenv >= envs + NENV)
+		{
+			cprintf("WTF %d\n", id);
+			exit();
+		}
 	}
 
 	// save the name of the program so that panic() can use it
