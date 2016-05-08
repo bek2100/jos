@@ -8,6 +8,9 @@ handler(struct UTrapframe *utf)
 	int r;
 	void *addr = (void*)utf->utf_fault_va;
 
+	void *addr_ip = (void*)utf->utf_eip;
+//	cprintf("fault ip %x\n", addr_ip);
+
 	cprintf("fault %x\n", addr);
 	if ((r = sys_page_alloc(0, ROUNDDOWN(addr, PGSIZE),
 				PTE_P|PTE_U|PTE_W)) < 0)

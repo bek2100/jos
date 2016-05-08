@@ -195,8 +195,12 @@ env_setup_vm(struct Env *e)
 	//    - The functions in kern/pmap.h are handy.
 
 	// LAB 3: Your code here.
-	memcpy(page2kva(p), kern_pgdir, PGSIZE);
-	e->env_pgdir = page2kva(p);
+	++p->pp_ref;
+	void *ptr = page2kva(p);
+	e->env_pgdir = ptr;
+
+	memcpy(ptr, kern_pgdir, PGSIZE);
+	memset(ptr, 0, PDX(UTOP) * sizeof(pde_t));
 
 	// UVPT maps the env's own page table read-only.
 	// Permissions: kernel R, user R
@@ -531,6 +535,7 @@ env_run(struct Env *e)
 	// Step 2: Use env_pop_tf() to restore the environment's
 	//	   registers and drop into user mode in the
 	//	   environment.
+//	cprintf("\n---\neip=%p id=%d\n---\n", e->env_tf.tf_eip, e->env_id);
 	env_pop_tf(&e->env_tf);
 
 	// Hint: This function loads the new environment's state from

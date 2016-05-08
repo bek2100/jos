@@ -258,6 +258,7 @@ trap_dispatch(struct Trapframe *tf)
 	// interrupt using lapic_eoi() before calling the scheduler!
 	// LAB 4: Your code here.
 
+		//print_trapframe(tf);
 	switch (tf->tf_trapno)
 	{
 	case T_PGFLT: {
@@ -401,13 +402,54 @@ page_fault_handler(struct Trapframe *tf)
 	//   user_mem_assert() and env_run() are useful here.
 	//   To change what the user environment runs, modify 'curenv->env_tf'
 	//   (the 'tf' variable points at 'curenv->env_tf').
-
 	// LAB 4: Your code here.
+	if (!curenv->env_pgfault_upcall)
+	{
+		cprintf("[%08x] user fault va %08x ip %08x\n",
+			curenv->env_id, fault_va, tf->tf_eip);
 
-	// Destroy the environment that caused the fault.
-	cprintf("[%08x] user fault va %08x ip %08x\n",
-		curenv->env_id, fault_va, tf->tf_eip);
+		// Destroy the environment that caused the fault.
+		print_trapframe(tf);
+		env_destroy(curenv);
+		return;
+	}
+
+	uintptr_t stk = ((tf->tf_esp >= UXSTACKTOP || tf->tf_esp < UXSTACKTOP - PGSIZE) ? UXSTACKTOP : tf->tf_esp-4);
+	stk -= sizeof(struct UTrapframe);
+
+	struct UTrapframe *utf = (struct UTrapframe*)stk;
+/*
+	cprintf ("stk=%p esp=%p USTACKTOP=%p UXSTACKTOP=%p\n", utf, tf->tf_esp, USTACKTOP, UXSTACKTOP);
 	print_trapframe(tf);
-	env_destroy(curenv);
+*/
+	user_mem_assert(curenv, utf, sizeof(struct UTrapframe), PTE_W);
+	
+	utf->utf_esp = tf->tf_esp;
+	utf->utf_eflags = tf->tf_eflags;
+	utf->utf_eip = tf->tf_eip;
+	utf->utf_regs = tf->tf_regs;
+	utf->utf_err = tf->tf_err;
+	utf->utf_fault_va = fault_va;	
+
+	tf->tf_esp = (uintptr_t)stk;
+	tf->tf_eip = (uintptr_t)curenv->env_pgfault_upcall;
+//cprintf("aaa eip=%p esp=%p real_easp=%p\n", tf->tf_eip, tf->tf_esp, read_esp());
+	env_run(curenv);
 }
 
+/*
+		//if not recursive
+		uintptr_t stk_top = UXSTACKTOP - 4;
+		__asm__ __volatile__ (	"movl %%esp, %0\n"
+					"movl %0, %%esp\n"
+					"pushf\n"
+					"pushl %%eip\n"
+					"pusha\n"
+					"pushl $0\n"
+					"pushl %1\n"
+					: : "m" (stk_top), "m" (fault_va) : "memory", "cc");
+
+	__asm__ __volatile__("rdmsr" \
+	: "=a" (val1), "=d" (val2) \
+	: "c" (msr))
+*/
