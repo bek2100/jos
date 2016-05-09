@@ -54,7 +54,7 @@ i386_init(void)
 
 	// Starting non-boot CPUs
 	boot_aps();
-
+	
 #if defined(TEST)
 	// Don't touch -- used by grading script!
 	ENV_CREATE(TEST, ENV_TYPE_USER);

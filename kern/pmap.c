@@ -653,7 +653,6 @@ page_insert(pde_t *pgdir, struct PageInfo *pp, void *va, int perm)
 	page_remove(pgdir, va);
 
 	*pte = PTE_ADDR(page2pa(pp)) | perm | PTE_P;
-
 	return 0;
 }
 
@@ -755,7 +754,7 @@ mmio_map_region(physaddr_t pa, size_t size)
 	if (base + size > MMIOLIM) panic ("mmio out of mem");
 
 	uintptr_t ans = base;
-	base += size;
+	base += ROUNDUP(size, PGSIZE);
 
 	boot_map_region(kern_pgdir, ans, size, pa, PTE_PCD|PTE_PWT|PTE_W);
 	return (void*)ans;

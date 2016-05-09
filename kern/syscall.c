@@ -93,8 +93,8 @@ sys_exofork(void)
 
 	e->env_status = ENV_NOT_RUNNABLE;
 	e->env_tf = curenv->env_tf;
+	//e->env_pgfault_upcall = curenv->env_pgfault_upcall;
 	e->env_tf.tf_regs.reg_eax = 0;
-	
 	return e->env_id;
 }
 
@@ -115,6 +115,7 @@ sys_env_set_status(envid_t envid, int status)
 	// envid's status.
 
 	// LAB 4: Your code here.
+	//cprintf("set status enter\n");
 	if (status != ENV_RUNNABLE && status != ENV_NOT_RUNNABLE) return -E_INVAL;
 
 	struct Env *e = NULL;
@@ -124,6 +125,7 @@ sys_env_set_status(envid_t envid, int status)
 	if (!e || stat < 0) panic("sys_env_set_status envid2env=%d \n", stat);
 
 	e->env_status = status;
+	//cprintf("set status exit\n");
 	return 0;
 }
 
@@ -175,7 +177,7 @@ sys_page_alloc(envid_t envid, void *va, int perm)
 	//   If page_insert() fails, remember to free the page you
 	//   allocated!
 	// LAB 4: Your code here.
-
+	//cprintf("page alloc enter\n");
 	struct Env *e = NULL;
 	int stat = envid2env(envid, &e, 1);
 
@@ -190,6 +192,7 @@ sys_page_alloc(envid_t envid, void *va, int perm)
 	if (!pp) return -E_NO_MEM;
 
 	if ((stat = page_insert(e->env_pgdir, pp, va, perm)) < 0) page_free(pp);
+	//cprintf("page alloc exit\n");
 	return stat;
 }
 
@@ -242,7 +245,6 @@ sys_page_map(envid_t srcenvid, void *srcva,
 	if (!pte || !pp) return -E_INVAL;
 
 	if ((perm & PTE_W) && !(*pte & PTE_W)) return -E_INVAL;
-	
 	return page_insert(dst_e->env_pgdir, pp, dstva, perm);
 }
 
@@ -259,6 +261,8 @@ sys_page_unmap(envid_t envid, void *va)
 	// Hint: This function is a wrapper around page_remove().
 
 	// LAB 4: Your code here.
+
+		//cprintf("page unmap enter\n");
 	struct Env *e = NULL;
 	int stat = envid2env(envid, &e, 1);
 
@@ -268,6 +272,7 @@ sys_page_unmap(envid_t envid, void *va)
 	if ((uintptr_t)va >= UTOP || (uint32_t)va % PGSIZE) return -E_INVAL;
 
 	page_remove(e->env_pgdir, va);
+		//cprintf("page unmap exit\n");
 	return 0;
 }
 

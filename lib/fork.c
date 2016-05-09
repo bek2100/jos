@@ -21,7 +21,7 @@ pgfault(struct UTrapframe *utf)
 	addr = ROUNDDOWN(addr, PGSIZE);
 	uint32_t err = utf->utf_err;
 	int r;
-cprintf ("sss %p\n", utf->utf_eip);
+cprintf ("pgfault %p\n", utf->utf_eip);
 
 	// Check that the faulting access was (1) a write, and (2) to a
 	// copy-on-write page.  If not, panic.
@@ -30,12 +30,10 @@ cprintf ("sss %p\n", utf->utf_eip);
 	//   (see <inc/memlayout.h>).
 
 	// LAB 4: Your code here.
-		cprintf("valid pgfault %d %p %p\n", err, addr, utf->utf_eip);
 	volatile pte_t *pte = &uvpt[PGNUM(addr)];
-//	cprintf("aaa\n");
+
 	if (!((err & 2) && (*pte & PTE_COW)))
 		panic("pgfault %d %p %p", err, addr, utf->utf_eip);
-//	cprintf("aaa\n");
 
 	// Allocate a new page, map it at a temporary location (PFTEMP),
 	// copy the data from the old page to the new page, then move the new
@@ -44,10 +42,8 @@ cprintf ("sss %p\n", utf->utf_eip);
 	//   You should make three system calls.
 
 	// LAB 4: Your code here.
-cprintf("ppp\n");
 	if ((r = sys_page_alloc(0, PFTEMP, PTE_P|PTE_U|PTE_W)) < 0)
 		panic ("pgfault alloc %d", r);
-cprintf("ppp\n");
 
 	memcpy(PFTEMP, addr, PGSIZE);
 
@@ -56,7 +52,7 @@ cprintf("ppp\n");
 
 	if ((r = sys_page_unmap(0, PFTEMP)) < 0)
 		panic ("pgfault unmap %d", r);
-cprintf ("sss2 %p\n", utf->utf_eip);
+cprintf ("exit pgfault %p\n", utf->utf_eip);
 }
 
 //
@@ -80,12 +76,9 @@ duppage(envid_t envid, unsigned pn)
 	// LAB 4: Your code here.
 	int perm = *pte & (PTE_P|PTE_U), write = (*pte & (PTE_W|PTE_COW));
 	if (write) perm |= PTE_COW;
-
 	if ((r = sys_page_map(0, addr, envid, addr, perm)) < 0) panic ("duppage map %d %x %x %d", r, addr, UTOP, perm);
-
 	if (write)
 		if ((r = sys_page_map(0, addr, 0, addr, perm)) < 0) panic ("duppage map %d", r);
-
 	return 0;
 }
 
@@ -113,19 +106,22 @@ fork(void)
 	envid_t envid;
 
 	// LAB 4: Your code here.
+	cprintf("114 %08x\n", sys_getenvid());
 	set_pgfault_handler(pgfault);
+
 
 	if ((status = sys_exofork()) < 0) panic("fork %d", status);
 	envid = (envid_t)status;
 
 	if (!envid) //child
 	{
-//		cprintf("123 %p %d %p\n", envs, ENVX(sys_getenvid()), &thisenv);
+		cprintf("123 %p %d %p\n", envs, ENVX(sys_getenvid()), &thisenv);
 
 		thisenv = envs + ENVX(sys_getenvid());
-//		cprintf("456\n");
 		return 0;
 	}
+	
+	cprintf("127 %p %08x %d %p\n", envs, sys_getenvid(), status, &thisenv);
 	
 	for (p = 0; p < UTOP - PGSIZE; p += PGSIZE)
 	{
@@ -137,11 +133,14 @@ fork(void)
 		}
 	}
 
+	cprintf("136\n");
 //cprintf("UTOP=%p\n", UTOP);
 	if ((status = sys_page_alloc(envid, (void*)(UTOP-PGSIZE), PTE_P|PTE_W|PTE_U)) < 0) panic("fork %d", status);
+	cprintf("138\n");
 	if ((status = sys_env_set_pgfault_upcall(envid, _pgfault_upcall)) < 0) panic("fork %d", status);
+	cprintf("140\n");
 	if ((status = sys_env_set_status(envid, ENV_RUNNABLE)) < 0) panic("fork %d", status);
-
+	cprintf("146 %d %08x \n", (envs+ENVX(envid))->env_status, envid);
 	return envid;
 }
 

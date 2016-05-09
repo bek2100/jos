@@ -414,6 +414,7 @@ page_fault_handler(struct Trapframe *tf)
 		return;
 	}
 
+
 	uintptr_t stk = ((tf->tf_esp >= UXSTACKTOP || tf->tf_esp < UXSTACKTOP - PGSIZE) ? UXSTACKTOP : tf->tf_esp-4);
 	stk -= sizeof(struct UTrapframe);
 
