@@ -123,7 +123,7 @@ fork(void)
 	
 	cprintf("127 %p %08x %d %p\n", envs, sys_getenvid(), status, &thisenv);
 	
-	for (p = 0; p < UTOP - PGSIZE; p += PGSIZE)
+	for (p = UTEXT; p < UTOP - PGSIZE; p += PGSIZE)
 	{
 		
 		if (	((uvpd[PDX(p)] & (PTE_P|PTE_U)) == (PTE_P|PTE_U)) && 

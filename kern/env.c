@@ -372,6 +372,7 @@ load_icode(struct Env *e, uint8_t *binary)
 	if (!elf || elf->e_magic != ELF_MAGIC) panic("elf magic");
 	ph = (struct Proghdr*)(binary + elf->e_phoff);
 	eph = ph + elf->e_phnum;
+	
 	for(; ph < eph; ++ph)
 	{
 		if (ph->p_type != ELF_PROG_LOAD) continue;
@@ -380,6 +381,7 @@ load_icode(struct Env *e, uint8_t *binary)
 		memset((void*)ph->p_va, 0, ph->p_memsz);
 		memcpy((void*)ph->p_va, binary + ph->p_offset, ph->p_filesz);
 	}
+	
 
 	e->env_tf.tf_eip = elf->e_entry;
 

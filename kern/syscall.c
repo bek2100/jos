@@ -237,6 +237,7 @@ sys_page_map(envid_t srcenvid, void *srcva,
 
 	if ((uintptr_t)srcva >= UTOP || (uint32_t)srcva % PGSIZE) return -E_INVAL;
 	if ((uintptr_t)dstva >= UTOP || (uint32_t)dstva % PGSIZE) return -E_INVAL;
+	
 	if (((perm & (PTE_U|PTE_P)) != (PTE_U|PTE_P)) ||
             (perm & ~(PTE_U|PTE_P|PTE_AVAIL|PTE_W))) return -E_INVAL;
 
@@ -245,7 +246,10 @@ sys_page_map(envid_t srcenvid, void *srcva,
 	if (!pte || !pp) return -E_INVAL;
 
 	if ((perm & PTE_W) && !(*pte & PTE_W)) return -E_INVAL;
-	return page_insert(dst_e->env_pgdir, pp, dstva, perm);
+	
+	if (page_insert(dst_e->env_pgdir, pp, dstva, perm) < 0) return -E_NO_MEM;
+
+	return 0;
 }
 
 // Unmap the page of memory at 'va' in the address space of 'envid'.
@@ -356,21 +360,21 @@ syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
 	case SYS_cputs:
 		sys_cputs((const char*)a1, (size_t)a2);	return 0;
 	case SYS_cgetc:
-		return (uint32_t)sys_cgetc();
+		return (int32_t)sys_cgetc();
 	case SYS_getenvid:
-		return (uint32_t)sys_getenvid();
+		return (int32_t)sys_getenvid();
 	case SYS_env_destroy:
-		return (uint32_t)sys_env_destroy((envid_t)a1);
+		return (int32_t)sys_env_destroy((envid_t)a1);
 	case SYS_yield:
 		sys_yield(); return 0;
 	case SYS_exofork:
-		return (uint32_t)sys_exofork();
+		return (int32_t)sys_exofork();
 	case SYS_env_set_status:
-		return (uint32_t)sys_env_set_status((envid_t)a1, (int)a2);
+		return (int32_t)sys_env_set_status((envid_t)a1, (int)a2);
 	case SYS_page_alloc:
-		return (uint32_t)sys_page_alloc((envid_t)a1, (void*)a2, (int)a3);
+		return (int32_t)sys_page_alloc((envid_t)a1, (void*)a2, (int)a3);
 	case SYS_page_map:
-		return (uint32_t)sys_page_map((envid_t)a1, (void*)a2, (envid_t)a3, (void*)a4, (int)a5);
+		return (int32_t)sys_page_map((envid_t)a1, (void*)a2, (envid_t)a3, (void*)a4, (int)a5);
 	case SYS_page_unmap:
 		return sys_page_unmap((envid_t)a1, (void*)a2);
 	case SYS_env_set_pgfault_upcall:

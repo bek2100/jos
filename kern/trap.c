@@ -197,7 +197,7 @@ trap_init_percpu(void)
 void
 print_trapframe(struct Trapframe *tf)
 {
-	cprintf("TRAP frame at %p from CPU %d\n", tf, cpunum());
+	cprintf("TRAP frame at %p from CPU %d env %08x\n", tf, cpunum(), curenv->env_id);
 	print_regs(&tf->tf_regs);
 	cprintf("  es   0x----%04x\n", tf->tf_es);
 	cprintf("  ds   0x----%04x\n", tf->tf_ds);
@@ -413,7 +413,6 @@ page_fault_handler(struct Trapframe *tf)
 		env_destroy(curenv);
 		return;
 	}
-
 
 	uintptr_t stk = ((tf->tf_esp >= UXSTACKTOP || tf->tf_esp < UXSTACKTOP - PGSIZE) ? UXSTACKTOP : tf->tf_esp-4);
 	stk -= sizeof(struct UTrapframe);
