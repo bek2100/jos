@@ -88,8 +88,11 @@ sys_yield(void)
 
 int
 sys_page_alloc(envid_t envid, void *va, int perm)
-{
-	return syscall(SYS_page_alloc, 1, envid, (uint32_t) va, perm, 0, 0);
+{	
+	cprintf("entering allo kololo\n");
+	int stat= syscall(SYS_page_alloc, 1, envid, (uint32_t) va, perm, 0, 0);
+	cprintf("exiting allo kololo\n");
+	return stat;
 }
 
 int

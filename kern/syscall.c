@@ -177,7 +177,7 @@ sys_page_alloc(envid_t envid, void *va, int perm)
 	//   If page_insert() fails, remember to free the page you
 	//   allocated!
 	// LAB 4: Your code here.
-	//cprintf("page alloc enter\n");
+	cprintf("page alloc enter\n");
 	struct Env *e = NULL;
 	int stat = envid2env(envid, &e, 1);
 
@@ -192,7 +192,7 @@ sys_page_alloc(envid_t envid, void *va, int perm)
 	if (!pp) return -E_NO_MEM;
 
 	if ((stat = page_insert(e->env_pgdir, pp, va, perm)) < 0) page_free(pp);
-	//cprintf("page alloc exit\n");
+	cprintf("page alloc exit, stat is %d\n", stat);
 	return stat;
 }
 
@@ -322,7 +322,40 @@ static int
 sys_ipc_try_send(envid_t envid, uint32_t value, void *srcva, unsigned perm)
 {
 	// LAB 4: Your code here.
-	panic("sys_ipc_try_send not implemented");
+	//panic("sys_ipc_try_send not implemented");
+
+	struct Env *e = NULL;
+	int stat = envid2env (envid, &e, 0);
+	
+	if (stat == -E_BAD_ENV) return stat;	
+	if (!e || stat < 0) panic("sys_page_unmap envid2env=%d \n", stat);
+	
+	if (!(e->env_ipc_recving)) return -E_IPC_NOT_RECV;
+
+	if ((uintptr_t)srcva >= UTOP || (uint32_t)srcva % PGSIZE) return -E_INVAL;
+
+	if (((perm & (PTE_U|PTE_P)) != (PTE_U|PTE_P)) ||
+            (perm & ~(PTE_U|PTE_P|PTE_AVAIL|PTE_W))) return -E_INVAL;
+
+	if(!srcva)
+		e->env_ipc_perm = 0;
+	else {
+	pte_t *pte;
+	
+	struct PageInfo *pp = page_lookup(curenv->env_pgdir, srcva, &pte);
+	if (!pte || !pp) return -E_INVAL;
+	if (!(*pte & PTE_W) && (perm & PTE_W)) return -E_INVAL;
+	
+	if ( (page_insert(e->env_pgdir, pp, e->env_ipc_dstva, perm)) <0) return -E_NO_MEM;
+	e->env_ipc_perm = perm; }
+
+	e->env_ipc_recving = 0;
+    	e->env_ipc_from = curenv->env_id;
+	e->env_ipc_value = value;
+	e->env_status = ENV_RUNNABLE;
+
+	return 0;
+
 }
 
 // Block until a value is ready.  Record that you want to receive
@@ -340,7 +373,15 @@ static int
 sys_ipc_recv(void *dstva)
 {
 	// LAB 4: Your code here.
-	panic("sys_ipc_recv not implemented");
+	//panic("sys_ipc_recv not implemented");
+
+	if ((uintptr_t)dstva >= UTOP || (uint32_t)dstva % PGSIZE) return -E_INVAL;
+	curenv->env_ipc_dstva = dstva;
+	curenv->env_ipc_recving = 1;
+	curenv->env_status = ENV_NOT_RUNNABLE;	
+	curenv->env_tf.tf_regs.reg_eax=0;
+
+	sched_yield();	
 	return 0;
 }
 
@@ -351,7 +392,7 @@ syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
 	// Call the function corresponding to the 'syscallno' parameter.
 	// Return any appropriate return value.
 	// LAB 3: Your code here.
-
+	int ret;
 //	panic("syscall not implemented");
 
 	if (syscallno >= NSYSCALLS) return -E_NO_SYS;

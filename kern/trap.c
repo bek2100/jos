@@ -101,6 +101,23 @@ void NULL11_handler();
 void syscall_handler();
 void sysenter_handler();
 
+void irq0_handler();
+void irq1_handler();
+void irq2_handler();
+void irq3_handler();
+void irq4_handler();
+void irq5_handler();
+void irq6_handler();
+void irq7_handler();
+void irq8_handler();
+void irq9_handler();
+void irq10_handler();
+void irq11_handler();
+void irq12_handler();
+void irq13_handler();
+void irq14_handler();
+void irq15_handler();
+
 void
 trap_init(void)
 {
@@ -141,6 +158,23 @@ trap_init(void)
 	SETGATE(idt[31], 0, GD_KT, NULL11_handler,      0);
 
 	SETGATE(idt[T_SYSCALL], 0, GD_KT, syscall_handler, 3);
+
+	SETGATE(idt[IRQ_OFFSET], 0, GD_KT, irq0_handler, 0);
+	SETGATE(idt[IRQ_OFFSET+1], 0, GD_KT, irq1_handler, 0);
+	SETGATE(idt[IRQ_OFFSET+2], 0, GD_KT, irq2_handler, 0);
+	SETGATE(idt[IRQ_OFFSET+3], 0, GD_KT, irq3_handler, 0);
+	SETGATE(idt[IRQ_OFFSET+4], 0, GD_KT, irq4_handler, 0);
+	SETGATE(idt[IRQ_OFFSET+5], 0, GD_KT, irq5_handler, 0);
+	SETGATE(idt[IRQ_OFFSET+6], 0, GD_KT, irq6_handler, 0);
+	SETGATE(idt[IRQ_OFFSET+7], 0, GD_KT, irq7_handler, 0);
+	SETGATE(idt[IRQ_OFFSET+8], 0, GD_KT, irq8_handler, 0);
+	SETGATE(idt[IRQ_OFFSET+9], 0, GD_KT, irq9_handler, 0);
+	SETGATE(idt[IRQ_OFFSET+10], 0, GD_KT, irq10_handler, 0);
+	SETGATE(idt[IRQ_OFFSET+11], 0, GD_KT, irq11_handler, 0);
+	SETGATE(idt[IRQ_OFFSET+12], 0, GD_KT, irq12_handler, 0);
+	SETGATE(idt[IRQ_OFFSET+13], 0, GD_KT, irq13_handler, 0);
+	SETGATE(idt[IRQ_OFFSET+14], 0, GD_KT, irq14_handler, 0);	
+	SETGATE(idt[IRQ_OFFSET+15], 0, GD_KT, irq15_handler, 0);
 
 	wrmsr(0x174,GD_KT,0);
 	wrmsr(0x175,KSTACKTOP,0);
@@ -183,7 +217,7 @@ trap_init_percpu(void)
 	thiscpu->cpu_ts.ts_ss0 = GD_KD;
 
 	// Initialize the TSS slot of the gdt.
-	gdt[(GD_TSS0 >> 3) + cpunum()] = SEG16(STS_T32A, (uint32_t) (&thiscpu->cpu_ts),	sizeof(struct Taskstate) - 1, 0);
+	gdt[(GD_TSS0 >> 3) + cpunum()] = SEG16(STS_T32A, (uint32_t) (&thiscpu->cpu_ts),	sizeof(struct Taskstate/* -1*/), 0);
 	gdt[(GD_TSS0 >> 3) + cpunum()].sd_s = 0;
 
 	// Load the TSS selector (like other segment selectors, the
@@ -268,7 +302,7 @@ trap_dispatch(struct Trapframe *tf)
 		monitor(tf);
 		} break;
 	case T_SYSCALL: {
-		uint32_t ans = syscall(	tf->tf_regs.reg_eax,
+		int32_t ans = syscall(	tf->tf_regs.reg_eax,
 					tf->tf_regs.reg_edx,
 					tf->tf_regs.reg_ecx,
 					tf->tf_regs.reg_ebx,
@@ -276,6 +310,10 @@ trap_dispatch(struct Trapframe *tf)
 					tf->tf_regs.reg_esi);
 		tf->tf_regs.reg_eax = ans;
 		} break;
+	case IRQ_OFFSET : { 
+		sched_yield();
+		return;
+	} break;
 	default: {
 		// Unexpected trap: The user process or the kernel has a bug.
 		print_trapframe(tf);
@@ -348,8 +386,9 @@ trap(struct Trapframe *tf)
 	// If we made it to this point, then no other environment was
 	// scheduled, so we should return to the current environment
 	// if doing so makes sense.
-	if (curenv && curenv->env_status == ENV_RUNNING)
+	if (curenv && curenv->env_status == ENV_RUNNING){
 		env_run(curenv);
+}
 	else
 		sched_yield();
 }
@@ -422,7 +461,7 @@ page_fault_handler(struct Trapframe *tf)
 	cprintf ("stk=%p esp=%p USTACKTOP=%p UXSTACKTOP=%p\n", utf, tf->tf_esp, USTACKTOP, UXSTACKTOP);
 	print_trapframe(tf);
 */
-	user_mem_assert(curenv, utf, sizeof(struct UTrapframe), PTE_W);
+	user_mem_assert(curenv, utf, sizeof(struct UTrapframe), PTE_W|PTE_U);
 	
 	utf->utf_esp = tf->tf_esp;
 	utf->utf_eflags = tf->tf_eflags;
@@ -433,7 +472,6 @@ page_fault_handler(struct Trapframe *tf)
 
 	tf->tf_esp = (uintptr_t)stk;
 	tf->tf_eip = (uintptr_t)curenv->env_pgfault_upcall;
-//cprintf("aaa eip=%p esp=%p real_easp=%p\n", tf->tf_eip, tf->tf_esp, read_esp());
 	env_run(curenv);
 }
 
