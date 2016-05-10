@@ -30,7 +30,7 @@ pgfault(struct UTrapframe *utf)
 	// LAB 4: Your code here.
 	volatile pte_t *pte = &uvpt[PGNUM(addr)];
 
-	if (!((err & 2) && (*pte & PTE_COW)))
+	if (!((err & FEC_WR) && (*pte & PTE_COW)))
 		panic("pgfault %d %p %p", err, addr, utf->utf_eip);
 
 	cprintf ("pgfault err ok %p addr: %p\n", utf->utf_eip, addr);
@@ -43,14 +43,15 @@ pgfault(struct UTrapframe *utf)
 	//   You should make three system calls.
 
 	// LAB 4: Your code here.
-	if ((r = sys_page_alloc(0, PFTEMP, PTE_P|PTE_U|PTE_W)) < 0)
-		panic ("pgfault alloc %d", r);
-
+	if ((r = sys_page_alloc(0, PFTEMP, PTE_P|PTE_U|PTE_W)) < 0) panic ("pgfault alloc %d", r);
+	cprintf("1\n");
 	memcpy(PFTEMP, addr, PGSIZE);
-	if ((r = sys_page_map(0, PFTEMP, 0, addr, PTE_P|PTE_U|PTE_W)) < 0)
-		panic ("pgfault map %d", r);
-	if ((r = sys_page_unmap(0, PFTEMP)) < 0)
-		panic ("pgfault unmap %d", r);
+	cprintf("2\n");
+	if ((r = sys_page_map(0, PFTEMP, 0, addr, PTE_P|PTE_U|PTE_W)) < 0) panic ("pgfault map %d", r);
+	cprintf("3\n");
+	if ((r = sys_page_unmap(0, PFTEMP)) < 0) panic ("pgfault unmap %d", r);
+	cprintf("4\n");
+	return;
 }
 
 //
@@ -119,7 +120,7 @@ fork(void)
 	
 	cprintf("127 %p %08x %d %p\n", envs, sys_getenvid(), status, &thisenv);
 	
-	for (p = UTEXT; p < USTACKTOP; p += PGSIZE)
+	for (p = UTEXT; p < UTOP - PGSIZE; p += PGSIZE)
 	{
 		
 		if (	((uvpd[PDX(p)] & (PTE_P|PTE_U)) == (PTE_P|PTE_U)) && 
