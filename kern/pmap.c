@@ -649,10 +649,16 @@ page_insert(pde_t *pgdir, struct PageInfo *pp, void *va, int perm)
 	pte_t *pte = pgdir_walk(pgdir, va, 1);
 	if (!pte) return -E_NO_MEM;
 
-	++pp->pp_ref;
-	page_remove(pgdir, va);
+	//++pp->pp_ref;
+	//page_remove(pgdir, va);
 
-	*pte = PTE_ADDR(page2pa(pp)) | perm | PTE_P;
+	if (PTE_ADDR(*pte)!= page2pa(pp))
+	{	
+		pp->pp_ref++;
+		page_remove(pgdir, va);
+	}
+
+	*pte = page2pa(pp) | perm | PTE_P;
 	return 0;
 }
 

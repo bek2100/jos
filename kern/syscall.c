@@ -93,7 +93,6 @@ sys_exofork(void)
 
 	e->env_status = ENV_NOT_RUNNABLE;
 	e->env_tf = curenv->env_tf;
-	//e->env_pgfault_upcall = curenv->env_pgfault_upcall;
 	e->env_tf.tf_regs.reg_eax = 0;
 	return e->env_id;
 }
@@ -188,13 +187,11 @@ sys_page_alloc(envid_t envid, void *va, int perm)
 	if (((perm & (PTE_U|PTE_P)) != (PTE_U|PTE_P)) ||
             (perm & ~(PTE_SYSCALL))) return -E_INVAL;
 
-	struct PageInfo *pp = page_alloc(0);
+	struct PageInfo *pp = page_alloc(1);
 	if (!pp) return -E_NO_MEM;
 
-	++pp->pp_ref;
-
+	
 	if ((stat = page_insert(e->env_pgdir, pp, va, perm)) < 0) page_free(pp);
-	//cprintf("page alloc exit, stat is %d\n", stat);
 	return stat;
 }
 
@@ -249,6 +246,7 @@ sys_page_map(envid_t srcenvid, void *srcva,
 
 	if ((perm & PTE_W) && !(*pte & PTE_W)) return -E_INVAL;
 	
+	pp->pp_ref++;	
 	return page_insert(dst_e->env_pgdir, pp, dstva, perm);
 
 }
@@ -329,14 +327,13 @@ sys_ipc_try_send(envid_t envid, uint32_t value, void *srcva, unsigned perm)
 	if (stat == -E_BAD_ENV) return stat;	
 	if (!e || stat < 0) panic("sys_page_unmap envid2env=%d \n", stat);
 	
-	if (!(e->env_ipc_recving)) return -E_IPC_NOT_RECV;
+	if (!e->env_ipc_recving) return -E_IPC_NOT_RECV;
 
-	if ((uintptr_t)srcva >= UTOP || (uint32_t)srcva % PGSIZE) return -E_INVAL;
+	if ((uintptr_t)srcva < UTOP && (uint32_t)srcva % PGSIZE) return -E_INVAL;
 
-	if (((perm & (PTE_U|PTE_P)) != (PTE_U|PTE_P)) ||
-            (perm & ~(PTE_U|PTE_P|PTE_AVAIL|PTE_W))) return -E_INVAL;
+	if ((perm & PTE_SYSCALL) != perm) return -E_INVAL;
 
-	if(!srcva)
+	if(!srcva || (uintptr_t)srcva >= UTOP)
 		e->env_ipc_perm = 0;
 	else {
 	pte_t *pte;
@@ -346,8 +343,9 @@ sys_ipc_try_send(envid_t envid, uint32_t value, void *srcva, unsigned perm)
 	if (!(*pte & PTE_W) && (perm & PTE_W)) return -E_INVAL;
 	
 	if ( (page_insert(e->env_pgdir, pp, e->env_ipc_dstva, perm)) <0) return -E_NO_MEM;
-	e->env_ipc_perm = perm; }
-
+	e->env_ipc_perm = perm; 
+	}
+	
 	e->env_ipc_recving = 0;
     	e->env_ipc_from = curenv->env_id;
 	e->env_ipc_value = value;
@@ -374,7 +372,7 @@ sys_ipc_recv(void *dstva)
 	// LAB 4: Your code here.
 	//panic("sys_ipc_recv not implemented");
 
-	if ((uintptr_t)dstva >= UTOP || (uint32_t)dstva % PGSIZE) return -E_INVAL;
+	if ((uintptr_t)dstva < UTOP && (uint32_t)dstva % PGSIZE) return -E_INVAL;
 	curenv->env_ipc_dstva = dstva;
 	curenv->env_ipc_recving = 1;
 	curenv->env_status = ENV_NOT_RUNNABLE;	
@@ -419,6 +417,10 @@ syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
 		return sys_page_unmap((envid_t)a1, (void*)a2);
 	case SYS_env_set_pgfault_upcall:
 		return sys_env_set_pgfault_upcall((envid_t)a1 ,(void*)a2);
+	case SYS_ipc_try_send:
+       		return (int32_t)sys_ipc_try_send((envid_t)a1, (uint32_t)a2, (void *)a3, (unsigned)a4);
+   	case SYS_ipc_recv:
+       		return (int32_t)sys_ipc_recv((void *)a1);
 	default: 
 		return -E_NO_SYS;
 	}

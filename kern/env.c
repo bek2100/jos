@@ -195,11 +195,12 @@ env_setup_vm(struct Env *e)
 	//    - The functions in kern/pmap.h are handy.
 
 	// LAB 3: Your code here.
-	++p->pp_ref;
+
 	void *ptr = page2kva(p);
 	e->env_pgdir = ptr;
 
 	memcpy(ptr, kern_pgdir, PGSIZE);
+	++p->pp_ref;
 	memset(ptr, 0, PDX(UTOP) * sizeof(pde_t));
 
 	// UVPT maps the env's own page table read-only.
@@ -522,6 +523,7 @@ env_run(struct Env *e)
 	//	   1. Set the current environment (if any) back to
 	//	      ENV_RUNNABLE if it is ENV_RUNNING (think about
 	//	      what other states it can be in),
+	if (curenv !=e){
 	if (curenv && curenv->env_status == ENV_RUNNING) curenv->env_status = ENV_RUNNABLE;
 
 	//	   2. Set 'curenv' to the new environment,
@@ -532,7 +534,7 @@ env_run(struct Env *e)
 
 	//	   4. Update its 'env_runs' counter,
 	++curenv->env_runs;
-	
+	}
 
 	//	   5. Use lcr3() to switch to its address space.
 	lcr3(PADDR(curenv->env_pgdir));
@@ -541,7 +543,7 @@ env_run(struct Env *e)
 	//	   environment.
 	//cprintf("\n---\neip=%p id=%d\n---\n", e->env_tf.tf_eip, e->env_id);
 	unlock_kernel();
-	env_pop_tf(&e->env_tf);
+	env_pop_tf(&curenv->env_tf);
 	// Hint: This function loads the new environment's state from
 	//	e->env_tf.  Go back through the code you wrote above
 	//	and make sure you have set the relevant parts of

@@ -33,7 +33,6 @@ pgfault(struct UTrapframe *utf)
 	if (!((err & FEC_WR) && (*pte & PTE_COW)))
 		panic("pgfault %d %p %p", err, addr, utf->utf_eip);
 
-	cprintf ("pgfault err ok %p addr: %p\n", utf->utf_eip, addr);
 
 	addr = ROUNDDOWN(addr, PGSIZE);
 	// Allocate a new page, map it at a temporary location (PFTEMP),
@@ -44,14 +43,10 @@ pgfault(struct UTrapframe *utf)
 
 	// LAB 4: Your code here.
 	if ((r = sys_page_alloc(0, PFTEMP, PTE_P|PTE_U|PTE_W)) < 0) panic ("pgfault alloc %d", r);
-	cprintf("1\n");
 	memcpy(PFTEMP, addr, PGSIZE);
-	cprintf("2\n");
 	if ((r = sys_page_map(0, PFTEMP, 0, addr, PTE_P|PTE_U|PTE_W)) < 0) panic ("pgfault map %d", r);
-	cprintf("3\n");
 	if ((r = sys_page_unmap(0, PFTEMP)) < 0) panic ("pgfault unmap %d", r);
-	cprintf("4\n");
-	return;
+
 }
 
 //
@@ -104,7 +99,6 @@ fork(void)
 	envid_t envid;
 
 	// LAB 4: Your code here.
-	cprintf("114 %08x\n", sys_getenvid());
 	set_pgfault_handler(pgfault);
 
 
@@ -112,15 +106,13 @@ fork(void)
 	envid = (envid_t)status;
 
 	if (envid == 0) //child
-	{	cprintf("116, env: %08x\n", sys_getenvid());
+	{
 		thisenv = &envs[ENVX(sys_getenvid())];
-		cprintf("118 %p %08x %d %p\n", envs, sys_getenvid(), status, &thisenv);
 		return 0;
 	}
 	
-	cprintf("127 %p %08x %d %p\n", envs, sys_getenvid(), status, &thisenv);
 	
-	for (p = UTEXT; p < UTOP - PGSIZE; p += PGSIZE)
+	for (p = 0; p < USTACKTOP; p += PGSIZE)
 	{
 		
 		if (	((uvpd[PDX(p)] & (PTE_P|PTE_U)) == (PTE_P|PTE_U)) && 
