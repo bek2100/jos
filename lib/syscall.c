@@ -19,11 +19,12 @@ syscall(int num, int check, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
 	// The last clause tells the assembler that this can
 	// potentially change the condition codes and arbitrary
 	// memory locations.
-if (true) /*
 	if (	num == SYS_yield ||
 		num == SYS_exofork ||
+		num == SYS_ipc_recv ||
+		num == SYS_env_destroy ||
 		a5 )
-	*/	asm volatile("int %1\n"
+		asm volatile("int %1\n"
 			: "=a" (ret)
 			: "i" (T_SYSCALL),
 			  "a" (num),
@@ -88,7 +89,7 @@ sys_yield(void)
 
 int
 sys_page_alloc(envid_t envid, void *va, int perm)
-{	
+{
 	return syscall(SYS_page_alloc, 1, envid, (uint32_t) va, perm, 0, 0);
 }
 

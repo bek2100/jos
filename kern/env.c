@@ -195,12 +195,11 @@ env_setup_vm(struct Env *e)
 	//    - The functions in kern/pmap.h are handy.
 
 	// LAB 3: Your code here.
-
+	++p->pp_ref;
 	void *ptr = page2kva(p);
 	e->env_pgdir = ptr;
 
 	memcpy(ptr, kern_pgdir, PGSIZE);
-	++p->pp_ref;
 	memset(ptr, 0, PDX(UTOP) * sizeof(pde_t));
 
 	// UVPT maps the env's own page table read-only.
@@ -292,7 +291,7 @@ env_alloc(struct Env **newenv_store, envid_t parent_id)
 //
 static void
 region_alloc(struct Env *e, void *va, size_t len)
-{	
+{
 	// LAB 3: Your code here.
 	// (But only if you need it for load_icode.)
 	//
@@ -310,7 +309,7 @@ region_alloc(struct Env *e, void *va, size_t len)
 		struct PageInfo *p = page_alloc(0);
 		if (!p) panic("no mem at region_alloc");
 		map_page(e->env_pgdir, (uintptr_t)start + (i * PGSIZE), page2pa(p), PTE_U | PTE_W);
-	}
+	}	
 }
 
 //
@@ -373,7 +372,6 @@ load_icode(struct Env *e, uint8_t *binary)
 	if (!elf || elf->e_magic != ELF_MAGIC) panic("elf magic");
 	ph = (struct Proghdr*)(binary + elf->e_phoff);
 	eph = ph + elf->e_phnum;
-	
 	for(; ph < eph; ++ph)
 	{
 		if (ph->p_type != ELF_PROG_LOAD) continue;
@@ -382,7 +380,6 @@ load_icode(struct Env *e, uint8_t *binary)
 		memset((void*)ph->p_va, 0, ph->p_memsz);
 		memcpy((void*)ph->p_va, binary + ph->p_offset, ph->p_filesz);
 	}
-	
 
 	e->env_tf.tf_eip = elf->e_entry;
 
@@ -518,32 +515,34 @@ env_pop_tf(struct Trapframe *tf)
 void
 env_run(struct Env *e)
 {
-
 	// Step 1: If this is a context switch (a new environment is running):
 	//	   1. Set the current environment (if any) back to
 	//	      ENV_RUNNABLE if it is ENV_RUNNING (think about
 	//	      what other states it can be in),
-	if (curenv !=e){
-	if (curenv && curenv->env_status == ENV_RUNNING) curenv->env_status = ENV_RUNNABLE;
+	if (curenv != e)
+	{
+		if (curenv && curenv->env_status == ENV_RUNNING) curenv->env_status = ENV_RUNNABLE;
 
 	//	   2. Set 'curenv' to the new environment,
-	curenv = e;
+		curenv = e;
 
 	//	   3. Set its status to ENV_RUNNING,
-	curenv->env_status = ENV_RUNNING;
+		curenv->env_status = ENV_RUNNING;
 
 	//	   4. Update its 'env_runs' counter,
-	++curenv->env_runs;
+		++curenv->env_runs;
 	}
 
 	//	   5. Use lcr3() to switch to its address space.
 	lcr3(PADDR(curenv->env_pgdir));
+
 	// Step 2: Use env_pop_tf() to restore the environment's
 	//	   registers and drop into user mode in the
 	//	   environment.
-	//cprintf("\n---\neip=%p id=%d\n---\n", e->env_tf.tf_eip, e->env_id);
+//	cprintf("\n---\neip=%p id=%d\n---\n", e->env_tf.tf_eip, e->env_id);
 	unlock_kernel();
 	env_pop_tf(&curenv->env_tf);
+
 	// Hint: This function loads the new environment's state from
 	//	e->env_tf.  Go back through the code you wrote above
 	//	and make sure you have set the relevant parts of

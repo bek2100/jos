@@ -125,10 +125,10 @@ trap_init(void)
 
 	// LAB 3: Your code here.
 	SETGATE(idt[ 0], 0, GD_KT, div_handler,         0);
-	SETGATE(idt[ 1], 1, GD_KT, debug_handler,       3);
+	SETGATE(idt[ 1], 0, GD_KT, debug_handler,       3);
 	SETGATE(idt[ 2], 0, GD_KT, NULL1_handler,       0);
-	SETGATE(idt[ 3], 1, GD_KT, bp_handler,          3);
-	SETGATE(idt[ 4], 1, GD_KT, overflow_handler,    0);
+	SETGATE(idt[ 3], 0, GD_KT, bp_handler,          3);
+	SETGATE(idt[ 4], 0, GD_KT, overflow_handler,    0);
 	SETGATE(idt[ 5], 0, GD_KT, bounds_handler,      0);
 	SETGATE(idt[ 6], 0, GD_KT, invalid_handler,     0);
 	SETGATE(idt[ 7], 0, GD_KT, cocpunotavl_handler, 0);
@@ -159,26 +159,22 @@ trap_init(void)
 
 	SETGATE(idt[T_SYSCALL], 0, GD_KT, syscall_handler, 3);
 
-	SETGATE(idt[IRQ_OFFSET], 0, GD_KT, irq0_handler, 0);
-	SETGATE(idt[IRQ_OFFSET+1], 0, GD_KT, irq1_handler, 0);
-	SETGATE(idt[IRQ_OFFSET+2], 0, GD_KT, irq2_handler, 0);
-	SETGATE(idt[IRQ_OFFSET+3], 0, GD_KT, irq3_handler, 0);
-	SETGATE(idt[IRQ_OFFSET+4], 0, GD_KT, irq4_handler, 0);
-	SETGATE(idt[IRQ_OFFSET+5], 0, GD_KT, irq5_handler, 0);
-	SETGATE(idt[IRQ_OFFSET+6], 0, GD_KT, irq6_handler, 0);
-	SETGATE(idt[IRQ_OFFSET+7], 0, GD_KT, irq7_handler, 0);
-	SETGATE(idt[IRQ_OFFSET+8], 0, GD_KT, irq8_handler, 0);
-	SETGATE(idt[IRQ_OFFSET+9], 0, GD_KT, irq9_handler, 0);
-	SETGATE(idt[IRQ_OFFSET+10], 0, GD_KT, irq10_handler, 0);
-	SETGATE(idt[IRQ_OFFSET+11], 0, GD_KT, irq11_handler, 0);
-	SETGATE(idt[IRQ_OFFSET+12], 0, GD_KT, irq12_handler, 0);
-	SETGATE(idt[IRQ_OFFSET+13], 0, GD_KT, irq13_handler, 0);
-	SETGATE(idt[IRQ_OFFSET+14], 0, GD_KT, irq14_handler, 0);	
-	SETGATE(idt[IRQ_OFFSET+15], 0, GD_KT, irq15_handler, 0);
-
-	wrmsr(0x174,GD_KT,0);
-	wrmsr(0x175,KSTACKTOP,0);
-	wrmsr(0x176,sysenter_handler,0);
+        SETGATE(idt[IRQ_OFFSET   ], 0, GD_KT, irq0_handler, 0);
+        SETGATE(idt[IRQ_OFFSET+1 ], 0, GD_KT, irq1_handler, 0);
+        SETGATE(idt[IRQ_OFFSET+2 ], 0, GD_KT, irq2_handler, 0);
+        SETGATE(idt[IRQ_OFFSET+3 ], 0, GD_KT, irq3_handler, 0);
+        SETGATE(idt[IRQ_OFFSET+4 ], 0, GD_KT, irq4_handler, 0);
+        SETGATE(idt[IRQ_OFFSET+5 ], 0, GD_KT, irq5_handler, 0);
+        SETGATE(idt[IRQ_OFFSET+6 ], 0, GD_KT, irq6_handler, 0);
+        SETGATE(idt[IRQ_OFFSET+7 ], 0, GD_KT, irq7_handler, 0);
+        SETGATE(idt[IRQ_OFFSET+8 ], 0, GD_KT, irq8_handler, 0);
+        SETGATE(idt[IRQ_OFFSET+9 ], 0, GD_KT, irq9_handler, 0);
+        SETGATE(idt[IRQ_OFFSET+10], 0, GD_KT, irq10_handler, 0);
+        SETGATE(idt[IRQ_OFFSET+11], 0, GD_KT, irq11_handler, 0);
+        SETGATE(idt[IRQ_OFFSET+12], 0, GD_KT, irq12_handler, 0);
+        SETGATE(idt[IRQ_OFFSET+13], 0, GD_KT, irq13_handler, 0);
+        SETGATE(idt[IRQ_OFFSET+14], 0, GD_KT, irq14_handler, 0);
+        SETGATE(idt[IRQ_OFFSET+15], 0, GD_KT, irq15_handler, 0);
 
 	// Per-CPU setup 
 	trap_init_percpu();
@@ -226,12 +222,16 @@ trap_init_percpu(void)
 
 	// Load the IDT
 	lidt(&idt_pd);
+
+	wrmsr(0x174,GD_KT, 0);
+	wrmsr(0x175,thiscpu->cpu_ts.ts_esp0, 0);
+	wrmsr(0x176,sysenter_handler, 0);
 }
 
 void
 print_trapframe(struct Trapframe *tf)
 {
-	cprintf("TRAP frame at %p from CPU %d env %08x\n", tf, cpunum(), curenv->env_id);
+	cprintf("TRAP frame at %p from CPU %d\n", tf, cpunum());
 	print_regs(&tf->tf_regs);
 	cprintf("  es   0x----%04x\n", tf->tf_es);
 	cprintf("  ds   0x----%04x\n", tf->tf_ds);
@@ -302,7 +302,7 @@ trap_dispatch(struct Trapframe *tf)
 		monitor(tf);
 		} break;
 	case T_SYSCALL: {
-		int32_t ans = syscall(	tf->tf_regs.reg_eax,
+		uint32_t ans = syscall(	tf->tf_regs.reg_eax,
 					tf->tf_regs.reg_edx,
 					tf->tf_regs.reg_ecx,
 					tf->tf_regs.reg_ebx,
@@ -310,10 +310,11 @@ trap_dispatch(struct Trapframe *tf)
 					tf->tf_regs.reg_esi);
 		tf->tf_regs.reg_eax = ans;
 		} break;
-	case IRQ_OFFSET + IRQ_TIMER: { 
+	case IRQ_OFFSET + IRQ_TIMER: {
 		lapic_eoi();
 		sched_yield();
 	} break;
+
 	default: {
 		// Unexpected trap: The user process or the kernel has a bug.
 		print_trapframe(tf);
@@ -386,9 +387,8 @@ trap(struct Trapframe *tf)
 	// If we made it to this point, then no other environment was
 	// scheduled, so we should return to the current environment
 	// if doing so makes sense.
-	if (curenv && curenv->env_status == ENV_RUNNING){
+	if (curenv && curenv->env_status == ENV_RUNNING)
 		env_run(curenv);
-}
 	else
 		sched_yield();
 }
@@ -470,8 +470,9 @@ page_fault_handler(struct Trapframe *tf)
 	utf->utf_err = tf->tf_err;
 	utf->utf_fault_va = fault_va;	
 
-	tf->tf_esp = (uintptr_t)stk;
+	tf->tf_esp = stk;
 	tf->tf_eip = (uintptr_t)curenv->env_pgfault_upcall;
+//cprintf("aaa eip=%p esp=%p real_easp=%p\n", tf->tf_eip, tf->tf_esp, read_esp());
 	env_run(curenv);
 }
 

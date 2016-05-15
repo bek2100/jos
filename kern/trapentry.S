@@ -100,10 +100,14 @@ TRAPHANDLER_NOEC(irq14_handler,   IRQ_OFFSET + 14)
 TRAPHANDLER_NOEC(irq15_handler,   IRQ_OFFSET + 15)
 
 
+
 .globl sysenter_handler
 .type sysenter_handler, @function
 .align 2;
 sysenter_handler:
+	push %esi
+	push %ebp
+
 	push %eax
 	push %ecx
 	push %edx
@@ -119,23 +123,16 @@ sysenter_handler:
 	push %edx
 	push %eax
 	call syscall
-	pop %eax
-	pop %edx
-	pop %ecx
-	pop %ebx
-	pop %edi
-	add $4, %esp
+	add $24, %esp
 
 	push %eax
-	push %ecx
-	push %edx
 	call trap_unlock_kernel
-	pop  %edx
-	pop  %ecx
 	pop  %eax
 
-	mov %esi, %edx
-	mov %ebp, %ecx
+	pop %ecx
+	pop %edx
+
+	sti
 	sysexit
 
 /*
@@ -145,23 +142,11 @@ sysenter_handler:
 .type _alltraps, @function
 .align 2;
 _alltraps:
-	pushl %ds
-	pushl %es
-	pushal
+	push %ds
+	push %es
+	pusha
 	mov $(GD_KD), %eax
-	movw %ax, %es
-	movw %ax, %ds
-	pushfl
-	popl %eax
-	movl $FL_IF, %ebx
-	notl %ebx
-	andl %ebx, %eax
-	pushl %eax
-	popfl
-	push %esp
+	mov %ax, %es
+	mov %ax, %ds
+	pushl %esp
 	call trap
-	pop %esp
-	popal
-	popl %es
-	popl %ds
-	iret

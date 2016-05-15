@@ -389,7 +389,6 @@ syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
 	// Call the function corresponding to the 'syscallno' parameter.
 	// Return any appropriate return value.
 	// LAB 3: Your code here.
-	int ret;
 //	panic("syscall not implemented");
 
 	if (syscallno >= NSYSCALLS) return -E_NO_SYS;
