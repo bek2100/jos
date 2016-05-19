@@ -278,7 +278,9 @@ env_alloc(struct Env **newenv_store, envid_t parent_id)
 	env_free_list = e->env_link;
 	*newenv_store = e;
 
+#ifndef CHALLENGE
 	cprintf("[%08x] new env %08x\n", curenv ? curenv->env_id : 0, e->env_id);
+#endif
 	return 0;
 }
 
@@ -539,7 +541,6 @@ env_run(struct Env *e)
 	// Step 2: Use env_pop_tf() to restore the environment's
 	//	   registers and drop into user mode in the
 	//	   environment.
-//	cprintf("\n---\neip=%p id=%d\n---\n", e->env_tf.tf_eip, e->env_id);
 	unlock_kernel();
 	env_pop_tf(&curenv->env_tf);
 
