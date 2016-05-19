@@ -403,12 +403,7 @@ syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
 	// LAB 3: Your code here.
 //	panic("syscall not implemented");
 
-	if (syscallno >= NSYSCALLS) return -E_NO_SYS;
-
 	switch (syscallno) {
-	default:
-		return -E_INVAL;
-
 	case SYS_cputs:
 		sys_cputs((const char*)a1, (size_t)a2);	return 0;
 	case SYS_cgetc:
@@ -436,7 +431,7 @@ syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
    	case SYS_ipc_recv:
        		return (int32_t)sys_ipc_recv((void *)a1);
 	default: 
-		return -E_NO_SYS;
+		return -E_INVAL;
 	}
 }
 
