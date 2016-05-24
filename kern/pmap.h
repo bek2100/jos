@@ -52,8 +52,6 @@ enum {
 };
 
 void	mem_init(void);
-void    map_page(pde_t *pgdir, uintptr_t va, physaddr_t pa, int perm);
-
 void	page_init(void);
 struct PageInfo *page_alloc(int alloc_flags);
 void	page_free(struct PageInfo *pp);

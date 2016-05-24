@@ -326,7 +326,7 @@ page_init(void)
 	size_t i, j;
 	for (i = 0; i < npages; i++) {
 		physaddr_t p = i * PGSIZE;
-		pages[i].pp_ref = 0;
+		pages[i].pp_ref = 1;
 		pages[i].pp_link = NULL;
 		pages[i].pp_size = 1;
 	
@@ -340,6 +340,7 @@ page_init(void)
 		if ((char*)KADDR(p) >= (char*)pages &&
 		    (char*)KADDR(p) < (char*)(pages + npages)) continue;
 */
+		pages[i].pp_ref = 0;
 
 		pages[i].pp_link = page_free_list;
 		page_free_list = &pages[i];
@@ -588,12 +589,6 @@ pgdir_walk(pde_t *pgdir, const void *va, int create)
 	return &((pte_t*)KADDR(PTE_ADDR(*pde)))[PTX(va)];
 }
 
-
-void map_page(pde_t *pgdir, uintptr_t va, physaddr_t pa, int perm)
-{
-	boot_map_region(pgdir, va, PGSIZE, pa, perm);
-}
-
 //
 // Map [va, va+size) of virtual address space to physical [pa, pa+size)
 // in the page table rooted at pgdir.  Size is a multiple of PGSIZE, and
@@ -649,14 +644,8 @@ page_insert(pde_t *pgdir, struct PageInfo *pp, void *va, int perm)
 	pte_t *pte = pgdir_walk(pgdir, va, 1);
 	if (!pte) return -E_NO_MEM;
 
-	//++pp->pp_ref;
-	//page_remove(pgdir, va);
-
-	if (PTE_ADDR(*pte)!= page2pa(pp))
-	{	
-		pp->pp_ref++;
-		page_remove(pgdir, va);
-	}
+	++pp->pp_ref;
+	page_remove(pgdir, va);
 
 	*pte = page2pa(pp) | perm | PTE_P;
 	return 0;

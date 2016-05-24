@@ -296,11 +296,36 @@ map_segment(envid_t child, uintptr_t va, size_t memsz,
 	return 0;
 }
 
+static int
+sharepage(envid_t envid, unsigned pn)
+{
+	int r;
+
+	void *addr = (void*)(pn * PGSIZE);
+	volatile pte_t *pte = &uvpt[PGNUM(addr)];
+	int shared = (*pte & PTE_SHARE);
+
+	if (shared)
+		if ((r = sys_page_map(0, addr, envid, addr, *pte & PTE_SYSCALL)) < 0) panic ("duppage map %d %x %x", r, addr, UTOP);
+
+	return 0;
+}
+
 // Copy the mappings for shared pages into the child address space.
 static int
 copy_shared_pages(envid_t child)
 {
 	// LAB 5: Your code here.
+	uintptr_t p;
+	for (p = 0; p < UTOP; p += PGSIZE)
+	{
+		if (	(uvpd[PDX(p)]   & PTE_P) &&
+			(uvpt[PGNUM(p)] & PTE_P)	)
+		{
+			 sharepage(child, PGNUM(p));
+		}
+	}
+
 	return 0;
 }
 

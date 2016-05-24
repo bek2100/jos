@@ -67,13 +67,20 @@ duppage(envid_t envid, unsigned pn)
 	void *addr = (void*)(pn * PGSIZE);
 	volatile pte_t *pte = &uvpt[PGNUM(addr)];
 	// LAB 4: Your code here.
-	int perm = *pte & (PTE_P|PTE_U), write = (*pte & (PTE_W|PTE_COW));
-	if (write) perm |= PTE_COW;
+	int perm = *pte & (PTE_P|PTE_U|PTE_SHARE), write = (*pte & (PTE_W|PTE_COW)), shared = (*pte & PTE_SHARE);
 
-	if ((r = sys_page_map(0, addr, envid, addr, perm)) < 0) panic ("duppage map %d %x %x %d", r, addr, UTOP, perm);
-
-	if (write)
-		if ((r = sys_page_map(0, addr, 0, addr, perm)) < 0) panic ("duppage map %d", r);
+	if (shared)
+	{
+//		cprintf("share %p\n", addr);
+		if ((r = sys_page_map(0, addr, envid, addr, *pte & PTE_SYSCALL)) < 0) panic ("duppage map %d %x %x %d", r, addr, UTOP, perm);
+	}
+	else
+	{
+		if (write) perm |= PTE_COW;
+		if ((r = sys_page_map(0, addr, envid, addr, perm)) < 0) panic ("duppage map %d %x %x %d", r, addr, UTOP, perm);
+		if (write)
+			if ((r = sys_page_map(0, addr, 0, addr, perm)) < 0) panic ("duppage map %d", r);
+	}
 
 	return 0;
 }

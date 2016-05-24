@@ -310,7 +310,7 @@ region_alloc(struct Env *e, void *va, size_t len)
 	{
 		struct PageInfo *p = page_alloc(0);
 		if (!p) panic("no mem at region_alloc");
-		map_page(e->env_pgdir, (uintptr_t)start + (i * PGSIZE), page2pa(p), PTE_U | PTE_W);
+		page_insert(e->env_pgdir, p, (void*)((uintptr_t)start + (i * PGSIZE)), PTE_U | PTE_W);
 	}	
 }
 
