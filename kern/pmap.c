@@ -410,7 +410,6 @@ struct PageInfo *big_alloc(size_t order, int alloc_flags)
 	struct PageInfo *ans = NULL, *tmp, *prev = NULL, *p = page_free_list;
 
 	size_t size = 1 << order;
-	//TODO: check size
 
 	while (p)
 	{

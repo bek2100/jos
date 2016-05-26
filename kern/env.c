@@ -15,9 +15,13 @@
 #include <kern/cpu.h>
 #include <kern/spinlock.h>
 
+//#include <inc/fs.h>
+
 struct Env *envs = NULL;		// All environments
 static struct Env *env_free_list;	// Free environment list
 					// (linked by Env->env_link)
+
+static void env_vm_clear(struct Env *e, int save_temp);
 
 #define ENVGENSHIFT	12		// >= LOGNENV
 
@@ -284,6 +288,51 @@ env_alloc(struct Env **newenv_store, envid_t parent_id)
 	return 0;
 }
 
+int
+env_realloc(struct Env *e)
+{
+	int32_t generation;
+	int r;
+
+	env_vm_clear(e, 1);
+
+	// Clear out all the saved register state,
+	// to prevent the register values
+	// of a prior environment inhabiting this Env structure
+	// from "leaking" into our new environment.
+	memset(&e->env_tf, 0, sizeof(e->env_tf));
+
+	// Set up appropriate initial values for the segment registers.
+	// GD_UD is the user data segment selector in the GDT, and
+	// GD_UT is the user text segment selector (see inc/memlayout.h).
+	// The low 2 bits of each segment register contains the
+	// Requestor Privilege Level (RPL); 3 means user mode.  When
+	// we switch privilege levels, the hardware does various
+	// checks involving the RPL and the Descriptor Privilege Level
+	// (DPL) stored in the descriptors themselves.
+	e->env_tf.tf_ds = GD_UD | 3;
+	e->env_tf.tf_es = GD_UD | 3;
+	e->env_tf.tf_ss = GD_UD | 3;
+	e->env_tf.tf_esp = USTACKTOP;
+	e->env_tf.tf_cs = GD_UT | 3;
+	// You will set e->env_tf.tf_eip later.
+
+	// Enable interrupts while in user mode.
+	// LAB 4: Your code here.
+	e->env_tf.tf_eflags |= FL_IF;
+
+	// Clear the page fault handler until user installs one.
+	e->env_pgfault_upcall = 0;
+
+	// Also clear the IPC receiving flag.
+	e->env_ipc_recving = 0;
+
+#ifndef CHALLENGE
+	//cprintf("[%08x] new env %08x\n", curenv ? curenv->env_id : 0, e->env_id);
+#endif
+	return 0;
+}
+
 //
 // Allocate len bytes of physical memory for environment env,
 // and map it at virtual address va in the environment's address space.
@@ -411,14 +460,34 @@ env_create(uint8_t *binary, enum EnvType type)
 
 	lcr3(PADDR(e->env_pgdir));
 	e->env_type = type;
-	load_icode(e, binary);	
+	load_icode(e, binary);
 }
 
-//
-// Frees env e and all memory it uses.
-//
-void
-env_free(struct Env *e)
+int
+env_recreate(struct Env *e, uintptr_t init_esp)
+{
+	int r;
+	if ((r = env_realloc(e)) < 0) return r; //panic("env_recreate");
+	if (e->env_type == ENV_TYPE_FS) e->env_tf.tf_eflags |= FL_IOPL_3;
+
+	lcr3(PADDR(e->env_pgdir));
+	load_icode(e, (uint8_t*)(UTEMP+PGSIZE));
+
+	page_remove(e->env_pgdir, (void*)(USTACKTOP-PGSIZE));
+	struct PageInfo *pp = page_lookup(e->env_pgdir, (void*)UTEMP, NULL);
+	if (!pp) panic("env_recreate");
+	if (page_insert(e->env_pgdir, pp, (void*)(USTACKTOP-PGSIZE), PTE_U | PTE_W | PTE_P)) panic("env_recreate");
+
+	uintptr_t p;
+	for (p = (uintptr_t)UTEMP; p < UTEXT; p += PGSIZE)
+		page_remove(e->env_pgdir, (void*)p);
+
+	e->env_tf.tf_esp = init_esp;
+
+	return 0;
+}
+
+static void env_vm_clear(struct Env *e, int save_temp)
 {
 	pte_t *pt;
 	uint32_t pdeno, pteno;
@@ -436,6 +505,7 @@ env_free(struct Env *e)
 	// Flush all mapped pages in the user portion of the address space
 	static_assert(UTOP % PTSIZE == 0);
 	for (pdeno = 0; pdeno < PDX(UTOP); pdeno++) {
+		if (save_temp && pdeno == PDX(UTEMP)) continue;
 
 		// only look at mapped page tables
 		if (!(e->env_pgdir[pdeno] & PTE_P))
@@ -455,6 +525,16 @@ env_free(struct Env *e)
 		e->env_pgdir[pdeno] = 0;
 		page_decref(pa2page(pa));
 	}
+}
+
+//
+// Frees env e and all memory it uses.
+//
+void
+env_free(struct Env *e)
+{
+	physaddr_t pa;
+	env_vm_clear(e, 0);
 
 	// free the page directory
 	pa = PADDR(e->env_pgdir);

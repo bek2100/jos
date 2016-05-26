@@ -56,6 +56,12 @@ sys_env_destroy(envid_t envid)
 
 	if ((r = envid2env(envid, &e, 1)) < 0)
 		return r;
+	/*
+	if (e == curenv)
+		cprintf("[%08x] exiting gracefully\n", curenv->env_id);
+	else
+		cprintf("[%08x] destroying %08x\n", curenv->env_id, e->env_id);
+	*/
 	env_destroy(e);
 	return 0;
 }
@@ -93,6 +99,12 @@ sys_exofork(void)
 	return e->env_id;
 }
 
+static int
+sys_exec(uintptr_t init_esp)
+{
+	return env_recreate(curenv, init_esp);
+}
+
 // Set envid's env_status to status, which must be ENV_RUNNABLE
 // or ENV_NOT_RUNNABLE.
 //
@@ -110,7 +122,6 @@ sys_env_set_status(envid_t envid, int status)
 	// envid's status.
 
 	// LAB 4: Your code here.
-	//cprintf("set status enter\n");
 	if (status != ENV_RUNNABLE && status != ENV_NOT_RUNNABLE) return -E_INVAL;
 
 	struct Env *e = NULL;
@@ -120,7 +131,6 @@ sys_env_set_status(envid_t envid, int status)
 	if (!e || stat < 0) panic("sys_env_set_status envid2env=%d \n", stat);
 
 	e->env_status = status;
-	//cprintf("set status exit\n");
 	return 0;
 }
 
@@ -200,7 +210,6 @@ sys_page_alloc(envid_t envid, void *va, int perm)
 	//   If page_insert() fails, remember to free the page you
 	//   allocated!
 	// LAB 4: Your code here.
-	//cprintf("page alloc enter\n");
 	struct Env *e = NULL;
 	int stat = envid2env(envid, &e, 1);
 
@@ -446,6 +455,8 @@ syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
        		return (int32_t)sys_ipc_recv((void *)a1);
 	case SYS_env_set_trapframe:
 		return (int32_t)sys_env_set_trapframe((envid_t)a1, (struct Trapframe*)a2);
+	case SYS_exec:
+		return sys_exec(a1);
 	default: 
 		return -E_INVAL;
 	}
