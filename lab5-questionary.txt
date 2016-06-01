@@ -1,0 +1,68 @@
+=== This template file contains questions you need to answer.
+=== Fill your answers on appropriate blank lines only.
+=== Don't start any line with three equal signs "===".
+=== Don't edit any lines starting from three equal signs.
+=== Use C notation to write numbers: 42 for decimal, 0x2a for hexadecimal.
+=== We may check most of the answers automatically, so "forty two" or
+=== "26+16" won't work for this example. Spaces are mostly ignored, so
+=== "  42  " is OK (without quotes of course). 
+=== When asked to specify address & instruction, do it in the form of
+=== gdb output "ADDRESS: INSTRUCTION", for example "0x7c26:  or  $0x1,%eax"
+=== Don't make lines longer than 80 characters. You don't need to fit your
+=== answer in a single line, you can start a new line at will.
+=== However, when asked to fill "a table" make each table raw a single line.
+
+=== Q How much disk space can be addressed by a single bitmap block
+===   when size of a block is 4Kb? (number in _bytes_)
+16777216
+
+=== Q How much disk space can be addressed by a single bitmap block
+===   when size of a block is 512B? (number in _bytes_)
+262144
+
+=== Q What is a maximum supported file size in JOS FS? (number in _bytes_)
+3221225472
+
+=== Q Did you have to do anything else to ensure that the I/O
+===   privilege setting is saved and restored properly when you
+===   subsequently switch from one environment to another? Why? 
+===   (free form)
+no, the eflags is saved like any other register when switching between environments
+
+=== Q How long approximately did it take you to do this lab?
+===   (number of hours for all partners combined)
+25
+
+====================================================================
+=== Q What challenge(s) have you chosen to implement? (specify
+===   challenge numbers separated by spaces, if more than one)
+4
+
+=== Q If the challenge requires changing the kernel source, list the
+===   files which you have changed/added during implementation.
+===   (one file per line, relative to lab directory containing .git/)
+user/exechello.c
+lib/exec.c
+lib/syscall.c
+lib/Makefrag
+kern/env.h
+kern/env.c
+kern/syscall.c
+fs/Makefrag
+inc/lib.h
+inc/syscall.h
+
+=== Q Describe you solution.
+===   (free form, up to 500 words, don't need to use all 500!)
+We implemented exec in the kernel (new syscall). [execl is done right like spwanl]
+In kern/env.c we added a function for recreate the environment with the new code and stack.
+Because the kernel cant read files, the user first read the new binary and set up the memory in the following form:
+	1. The first page at UTEMP is the new stack
+	2. From the page after that, there is the binary to execute
+The pointer to stack top is passed as a pointer to the syscall.
+
+The kernel uses the regular function for parsing the elf file, fixing the stack and free the temp memory.
+
+We also added a user program that do exec to hello. We can see that hello has the same id as exechello (unlike spawnhello).
+In addition we added this program to file system for checking recursive call (stability check) and compared to spwan a call with parameter (num lorem).
+
