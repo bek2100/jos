@@ -422,7 +422,7 @@ sys_ipc_recv(void *dstva)
 static int
 sys_time_msec(void)
 {
-	// LAB 6: Your code here.
+	// LAB 6: Your code here.m
 	return time_msec();
 	//panic("sys_time_msec not implemented");
 }
