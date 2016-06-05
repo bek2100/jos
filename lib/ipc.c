@@ -61,7 +61,7 @@ ipc_send(envid_t to_env, uint32_t val, void *pg, int perm)
 		sys_yield();
 	}
 
-	if(stat) panic("ipc_send error: %e addr=%p\n", stat, pg);
+	if(stat) panic("ipc_send error: %e to_env=%d addr=%p\n", stat, to_env, pg);
 }
 
 // Find the first environment of the given type.  We'll use this to
