@@ -27,4 +27,5 @@ int e1000_attach(struct pci_func *pcif){
 
 	bar0[0x100] = 0x4010A;
 	bar0[0x104] = 0x60200A;
+	return 0;
 }
