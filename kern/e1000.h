@@ -3,7 +3,7 @@
 
 #include <kern/pci.h>
 
-#define VENDOR_ID_E1000 0x8086h
+#define VENDOR_ID_E1000 0x8086
 #define DEVICE_ID_E1000_DESKTOP 0x100E
 #define DEVICE_ID_E1000_MOBILE 0x1015
 

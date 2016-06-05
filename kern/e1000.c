@@ -2,7 +2,7 @@
 
 // LAB 6: Your driver code here
 
-volatile uint32_t *bar0;
+volatile uint32_t *bar0 = NULL;
 #define TX_COUNT 16
 
 struct tx_desc_t tx_desc[TX_COUNT];
