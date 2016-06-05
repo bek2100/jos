@@ -3,9 +3,9 @@
 
 #include <kern/pci.h>
 
-#define VENDOR_ID_E1000 0x8086
-#define DEVICE_ID_E1000_DESKTOP 0x100E
-#define DEVICE_ID_E1000_MOBILE 0x1015
+#define E1000_VENDOR_ID		0x8086
+#define E1000_DEVICE_ID_DESKTOP	0x100E
+#define E1000_DEVICE_ID_MOBILE	0x1015
 
 int e1000_attach(struct pci_func *pcif);
 
@@ -21,7 +21,6 @@ struct tx_desc_t
 } __attribute__((packed));
 
 #define TX_BUFFER_MAX 1518
-
 typedef char tx_buffer_t[TX_BUFFER_MAX];
 
 #endif	// JOS_KERN_E1000_H

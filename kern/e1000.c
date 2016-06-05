@@ -1,15 +1,16 @@
-#include <kern/pmap.h>
 #include <kern/e1000.h>
 
-// LAB 6: Your driver code here
+#include <kern/pmap.h>
+
+#define TX_COUNT 16
 
 volatile uint32_t *bar0 = NULL;
-#define TX_COUNT 16
 
 struct tx_desc_t tx_desc[TX_COUNT];
 tx_buffer_t tx_buffers[TX_COUNT];
 
-int e1000_attach(struct pci_func *pcif){
+int e1000_attach(struct pci_func *pcif)
+{
 	pci_func_enable(pcif);
 	bar0 = mmio_map_region(pcif->reg_base[0], pcif->reg_size[0]);
 

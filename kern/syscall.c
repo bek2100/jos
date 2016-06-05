@@ -422,9 +422,9 @@ sys_ipc_recv(void *dstva)
 static int
 sys_time_msec(void)
 {
-	// LAB 6: Your code here.m
-	return time_msec();
+	// LAB 6: Your code here.
 	//panic("sys_time_msec not implemented");
+	return time_msec();
 }
 
 // Dispatches to the correct kernel function, passing the arguments.
