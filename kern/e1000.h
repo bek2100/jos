@@ -9,7 +9,7 @@
 
 int e1000_attach(struct pci_func *pcif);
 
-struct tx_desc
+struct tx_desc_t
 {
         uint64_t addr;
         uint16_t length;
@@ -21,6 +21,7 @@ struct tx_desc
 } __attribute__((packed));
 
 #define TX_BUFFER_MAX 1518
+
 typedef char tx_buffer_t[TX_BUFFER_MAX];
 
 #endif	// JOS_KERN_E1000_H
