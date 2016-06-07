@@ -150,3 +150,8 @@ sys_exec(uintptr_t init_esp)
 	return syscall(SYS_exec, 0, init_esp, 0, 0, 0, 0);
 }
 
+int
+sys_try_send_packet(const char* buffer, size_t len)
+{
+	return syscall(SYS_try_send_packet, 0, (uint32_t)buffer, len, 0, 0 ,0);
+}
