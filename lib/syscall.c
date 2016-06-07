@@ -138,7 +138,6 @@ sys_ipc_recv(void *dstva)
 	return syscall(SYS_ipc_recv, 1, (uint32_t)dstva, 0, 0, 0, 0);
 }
 
-
 unsigned int
 sys_time_msec(void)
 {
@@ -151,4 +150,8 @@ sys_exec(uintptr_t init_esp)
 	return syscall(SYS_exec, 0, init_esp, 0, 0, 0, 0);
 }
 
-
+int
+sys_try_send_packet(const char* buffer, size_t len)
+{
+	return syscall(SYS_try_send_packet, 0, (uint32_t)buffer, len, 0, 0 ,0);
+}

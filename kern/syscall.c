@@ -13,6 +13,8 @@
 #include <kern/sched.h>
 #include <kern/time.h>
 
+#include <kern/e1000.h>
+
 // Print a string to the system console.
 // The string is exactly 'len' characters long.
 // Destroys the environment on memory errors.
@@ -422,9 +424,16 @@ sys_ipc_recv(void *dstva)
 static int
 sys_time_msec(void)
 {
-	// LAB 6: Your code here.m
-	return time_msec();
+	// LAB 6: Your code here.
 	//panic("sys_time_msec not implemented");
+	return time_msec();
+}
+
+static int
+sys_try_send_packet(const char* buffer, size_t len)
+{
+	if (user_mem_check(curenv, buffer, len, PTE_U)) return -E_INVAL;
+	return e1000_try_send_packet(buffer, len);
 }
 
 // Dispatches to the correct kernel function, passing the arguments.
@@ -469,6 +478,8 @@ syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
 		return sys_exec(a1);
 	case SYS_time_msec:
 		return sys_time_msec();
+	case SYS_try_send_packet:
+		return sys_try_send_packet((const char*) a1, (size_t)a2);
 	default: 
 		return -E_INVAL;
 	}
