@@ -157,4 +157,7 @@ void	wait(envid_t env);
 #define	O_EXCL		0x0400		/* error if already exists */
 #define O_MKDIR		0x0800		/* create directory, not regular file */
 
+//net.c
+int send_packet(struct jif_pkt *pkt);
+
 #endif	// !JOS_INC_LIB_H
