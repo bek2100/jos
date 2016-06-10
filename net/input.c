@@ -19,7 +19,7 @@ input(envid_t ns_envid)
 
 	for(;;){
 			int len;
-			while ((r=sys_recv_packet(buffer, len)) == -E_NO_RCV)
+			while ((len=sys_recv_packet(buffer, len)) == -E_NO_RCV)
 				sys_yield();
 			//while((r=sys_page_alloc(0, &nsipcbuf, perm))<0)
 			nsipcbuf.pkt.jp_len = len;
