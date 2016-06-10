@@ -15,6 +15,7 @@
 #define DD_BIT   (1<<0)
 #define TCP_BIT  (1<<0)
 #define RS_BIT   (1<<3)
+#define EOP_BIT  (1<<1)
 
 #define TDBAL 0xe00
 #define TDBAH 0xe01
@@ -66,5 +67,6 @@ typedef char rx_buffer_t[RX_BUFFER_MAX];
 
 int e1000_attach(struct pci_func *pcif);
 int e1000_try_send_packet(const char *buffer, size_t len);
+int e1000_recv_packet(char *buffer);
 
 #endif	// JOS_KERN_E1000_H

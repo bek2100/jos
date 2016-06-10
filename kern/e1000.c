@@ -12,6 +12,7 @@ tx_buffer_t tx_buffers[TX_COUNT] = {{0}};
 rx_buffer_t rx_buffers[RX_COUNT] = {{0}};
 
 uint32_t tdt = 0;
+uint32_t rdt = 0;
 
 int e1000_attach(struct pci_func *pcif)
 {
@@ -74,7 +75,27 @@ int e1000_try_send_packet(const char *buffer, size_t len)
 
 	++tdt;
 	tdt = tdt % TX_COUNT;
-	bar0[0xe06] = tdt;
+	bar0[TDT] = tdt;
 
 	return 0;
 }
+
+int e1000_recv_packet(char *buffer){
+
+	if(!(rx_desc[rdt].status & DD_BIT)) return -E_NO_RCV;
+
+	if(!(rx_desc[rdt].status & EOP_BIT) panic("no long packet implemnted");
+
+	memcpy(&buffer, &rx_buffers[rdt], rx_desc[rdt].length);
+	rx_desc[rdt].status &= ~DD_BIT; 
+	rx_desc[rdt].status &= ~EOP_BIT; 
+
+	++rdt;
+	rdt = rdt % RX_COUNT;
+	bar0[RDT] = rdt;
+
+	return rx_desc[rdt].length;
+}
+
+
+

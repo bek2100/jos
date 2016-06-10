@@ -1,4 +1,5 @@
 #include "ns.h"
+#define RECV_SIZE 2048
 
 extern union Nsipc nsipcbuf;
 
@@ -13,4 +14,18 @@ input(envid_t ns_envid)
 	// Hint: When you IPC a page to the network server, it will be
 	// reading from it for a while, so don't immediately receive
 	// another packet in to the same physical page.
+	char buffer[RECV_SIZE];
+	int perm = PTE_U | PTE_P | PTE_W;
+	int len;
+
+	for(;;){
+		if(len = recv_packet(buffer, RECV_SIZE -1)){
+
+			//while((r=sys_page_alloc(0, &nsipcbuf, perm))<0)
+
+			nsipcbuf.pkt.jp_len = len;
+			memcpy(nsipcbuf.pkt.jp_data, buffer, len);
+			sys_ipc_try_send(&ns_envid, NSREQ_INPUT, &nsipcbuf ,perm);
+		}
+	}
 }
