@@ -19,13 +19,13 @@ input(envid_t ns_envid)
 	int len;
 
 	for(;;){
-		if(len = recv_packet(buffer, RECV_SIZE -1)){
+		if((len = recv_packet(buffer, RECV_SIZE -1))){
 
 			//while((r=sys_page_alloc(0, &nsipcbuf, perm))<0)
 
 			nsipcbuf.pkt.jp_len = len;
 			memcpy(nsipcbuf.pkt.jp_data, buffer, len);
-			sys_ipc_try_send(&ns_envid, NSREQ_INPUT, &nsipcbuf ,perm);
+			sys_ipc_try_send(ns_envid, NSREQ_INPUT, &nsipcbuf ,perm);
 		}
 	}
 }
