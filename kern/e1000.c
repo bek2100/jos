@@ -84,7 +84,7 @@ int e1000_recv_packet(char *buffer){
 
 	if(!(rx_desc[rdt].status & DD_BIT)) return -E_NO_RCV;
 
-	if(!(rx_desc[rdt].status & EOP_BIT) panic("no long packet implemnted");
+	if(!(rx_desc[rdt].status & EOP_BIT)) panic("no long packet implemnted");
 
 	memcpy(&buffer, &rx_buffers[rdt], rx_desc[rdt].length);
 	rx_desc[rdt].status &= ~DD_BIT; 
