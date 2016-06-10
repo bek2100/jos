@@ -20,8 +20,21 @@ struct tx_desc_t
         uint16_t special;
 } __attribute__((packed));
 
-#define TX_BUFFER_MAX 1518
+#define TX_BUFFER_MAX 2048
 typedef char tx_buffer_t[TX_BUFFER_MAX];
+
+struct rx_desc_t
+{
+        uint64_t addr;
+        uint16_t length;
+        uint16_t checksup;
+        uint8_t status;
+        uint8_t errors;
+        uint16_t special;
+} __attribute__((packed));
+
+#define RX_BUFFER_MAX 2048
+typedef char rx_buffer_t[RX_BUFFER_MAX];
 
 int e1000_attach(struct pci_func *pcif);
 int e1000_try_send_packet(const char *buffer, size_t len);
