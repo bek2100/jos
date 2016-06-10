@@ -3,13 +3,6 @@
 #include <kern/pmap.h>
 #include <inc/string.h>
 
-#define TX_COUNT 64
-#define RX_COUNT 256
-
-#define DD_BIT   (1<<0)
-#define TCP_BIT  (1<<0)
-#define RS_BIT   (1<<3)
-
 volatile uint32_t *bar0 = NULL;
 
 struct tx_desc_t tx_desc[TX_COUNT] = {{0}};
@@ -39,29 +32,29 @@ int e1000_attach(struct pci_func *pcif)
 		//rx_desc[i].length = RX_BUFFER_MAX;
 	}
 
-	bar0[0xe00] = PADDR(tx_desc);
-	bar0[0xe01] = 0;
-	bar0[0xe02] = sizeof(tx_desc);
+	bar0[TDBAL] = PADDR(tx_desc);
+	bar0[TDBAH] = 0;
+	bar0[TDLEN] = sizeof(tx_desc);
 
-	bar0[0xe04] = bar0[0xe06] = 0;
+	bar0[TDH] = bar0[TDT] = 0;
 
-	bar0[0x100] = 0x4010A;
-	bar0[0x104] = 0x60200A;
+	bar0[TCTL] = 0x4010A;
+	bar0[TIPG] = 0x60200A;
 
 	//uint8_t mac[6] = {0x52, 0x54, 0x00, 0x12, 0x34, 0x56};
 	//for (i = 0x1480; i < 0x1500; ++i) bar0[i] = 0;
-	bar0[0x1500] = 0x12005452;
-	bar0[0x1501] = 0x80005634;
+	bar0[RAL] = 0x12005452;
+	bar0[RAH] = 0x80005634;
 
-	bar0[0xa00] = PADDR(rx_desc);
-	bar0[0xa01] = 0;
-	bar0[0xa02] = sizeof(rx_desc);
+	bar0[RDBAL] = PADDR(rx_desc);
+	bar0[RDBAH] = 0;
+	bar0[RDLEN] = sizeof(rx_desc);
 
-	bar0[0xa04] = 0;
-	bar0[0xa06] = RX_COUNT + 1;
+	bar0[RDH] = 0;
+	bar0[RDT] = RX_COUNT + 1;
 
-	bar0[0x40] = 0x4000002;
-	bar0[0x34] = 0;
+	bar0[RCTL] = 0x4000002;
+	bar0[IMS] = 0;
 
 	return 0;
 }
