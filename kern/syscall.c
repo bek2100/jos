@@ -439,6 +439,7 @@ sys_try_send_packet(const char* buffer, size_t len)
 static int
 sys_recv_packet(char *buffer, size_t len)
 {
+	if (user_mem_check(curenv, buffer, len, PTE_U)) return -E_INVAL;
 	return e1000_recv_packet(buffer);
 }
 
