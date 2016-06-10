@@ -1,4 +1,6 @@
 #include "ns.h"
+
+
 #define RECV_SIZE 2048
 
 extern union Nsipc nsipcbuf;
@@ -18,7 +20,9 @@ input(envid_t ns_envid)
 	int perm = PTE_U | PTE_P | PTE_W;
 
 	for(;;){
-			int len=recv_packet(buffer, len);
+			int len;
+			while ((len=sys_recv_packet(buffer, len)) == -E_NO_RCV)
+				sys_yield();
 			//while((r=sys_page_alloc(0, &nsipcbuf, perm))<0)
 			nsipcbuf.pkt.jp_len = len;
 			memcpy(nsipcbuf.pkt.jp_data, buffer, len);
