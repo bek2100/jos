@@ -13,7 +13,7 @@ tx_buffer_t tx_buffers[TX_COUNT] = {{0}};
 rx_buffer_t rx_buffers[RX_COUNT] = {{0}};
 
 uint32_t tdt = 0;
-uint32_t rdt = 0;
+uint32_t rdt = RX_COUNT + 1;
 
 int e1000_attach(struct pci_func *pcif)
 {
