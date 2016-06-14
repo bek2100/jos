@@ -156,7 +156,7 @@ sys_try_send_packet(const char* buffer, size_t len)
 	return syscall(SYS_try_send_packet, 0, (uint32_t)buffer, len, 0, 0 ,0);
 }
 int
-sys_recv_packet(char* buffer, size_t len)
+sys_recv_packet(char* buffer)
 {
-	return syscall(SYS_recv_packet, 0, (uint32_t)buffer, len, 0, 0 ,0);
+	return syscall(SYS_recv_packet, 0, (uint32_t)buffer, 0, 0, 0 ,0);
 }
