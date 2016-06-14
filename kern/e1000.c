@@ -81,7 +81,7 @@ int e1000_try_send_packet(const char *buffer, size_t len)
 	++tdt;
 	tdt = tdt % TX_COUNT;
 	bar0[TDT] = tdt;
-	cprintf("eiv hamood\n");
+	cprintf("eiv hamood1\n");
 	return 0;
 }
 
