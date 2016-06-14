@@ -25,6 +25,7 @@ input(envid_t ns_envid)
 			while ((len = sys_recv_packet(buffer)) < 0){
 				sys_yield();
 			}
+			if(!len) len = RECV_SIZE -1;
 			while((r=sys_page_alloc(0, &nsipcbuf, perm))<0);
 			nsipcbuf.pkt.jp_len = len;
 			memcpy(nsipcbuf.pkt.jp_data, buffer, len);
