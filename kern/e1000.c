@@ -53,7 +53,7 @@ int e1000_attach(struct pci_func *pcif)
 	bar0[RDLEN] = sizeof(rx_desc);
 
 	bar0[RDH] = 0;
-	bar0[RDT] = RX_COUNT + 1;
+	bar0[RDT] =  0;
 	//bar0[RDT] = 0;
 
 	bar0[RCTL] = 0x4000002;
@@ -95,6 +95,8 @@ int e1000_recv_packet(char *buffer){
 	++rdt;
 	rdt = rdt % RX_COUNT;
 	bar0[RDT] = rdt;
+
+	cprintf("hello\n");
 
 	return rx_desc[rdt].length;
 }
