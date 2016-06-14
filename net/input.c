@@ -28,6 +28,6 @@ input(envid_t ns_envid)
 			while((r=sys_page_alloc(0, &nsipcbuf, perm))<0);
 			nsipcbuf.pkt.jp_len = len;
 			memcpy(nsipcbuf.pkt.jp_data, buffer, len);
-			while((r = sys_ipc_try_send(ns_envid, NSREQ_INPUT, &nsipcbuf ,perm))< 0);
+			while((r = ipc_send(ns_envid, NSREQ_INPUT, &nsipcbuf ,perm))< 0);
 		}
 }
