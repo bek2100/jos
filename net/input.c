@@ -25,7 +25,7 @@ input(envid_t ns_envid)
 			while ((len = sys_recv_packet(buffer)) < 0){
 				sys_yield();
 			}
-			//while((r=sys_page_alloc(0, &nsipcbuf, perm))<0);
+			while((r=sys_page_alloc(0, &nsipcbuf, perm))<0);
 			nsipcbuf.pkt.jp_len = len;
 			memcpy(nsipcbuf.pkt.jp_data, buffer, len);
 			ipc_send(ns_envid, NSREQ_INPUT, &nsipcbuf ,perm);
