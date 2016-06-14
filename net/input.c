@@ -27,7 +27,7 @@ input(envid_t ns_envid)
 				sys_yield();
 			}
 				cprintf("eiv hamood3\n");
-			ipc_send(ns_envid, NSREQ_INPUT, &nsipcbuf ,perm);
+			while ((r =sys_ipc_try_send(ns_envid, NSREQ_INPUT, &nsipcbuf ,perm))<0);
 				cprintf("eiv hamood0\n");
 		}
 }
