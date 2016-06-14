@@ -92,12 +92,12 @@ int e1000_recv_packet(char *buffer){
 	if(!(rx_desc[rdt].status & EOP_BIT)) panic("no long packet implemnted");
 
 	memcpy(buffer, &rx_buffers[rdt], rx_desc[rdt].length);
-	rx_desc[rdt].status &= ~DD_BIT; 
-	rx_desc[rdt].status &= ~EOP_BIT; 
+	rx_desc[rdt].status = 0; 
+
+	bar0[RDT] = rdt;
 
 	++rdt;
 	rdt = rdt % RX_COUNT;
-	bar0[RDT] = rdt;
 
 	cprintf("hello %d\n",rx_desc[rdt].length);
 	return rx_desc[rdt].length;

@@ -22,15 +22,11 @@ input(envid_t ns_envid)
 			int perm = PTE_U | PTE_P | PTE_W;
 			int len;
 			int r;
-			while ((len = sys_recv_packet(buffer)) < 0){
+			while((r=sys_page_alloc(0, &nsipcbuf, perm))<0);
+			while ((nsipcbuf.pkt.jp_len = sys_recv_packet(nsipcbuf.pkt.jp_data)) < 0){
 				sys_yield();
 			}
-			cprintf("eiv hamood\n");
-
-			if(!len) len = RECV_SIZE -1;
-			while((r=sys_page_alloc(0, &nsipcbuf, perm))<0);
-			nsipcbuf.pkt.jp_len = len;
-			memcpy(nsipcbuf.pkt.jp_data, buffer, len);
 			ipc_send(ns_envid, NSREQ_INPUT, &nsipcbuf ,perm);
+			cprintf("eiv hamood\n");
 		}
 }
