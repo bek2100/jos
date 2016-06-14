@@ -1,4 +1,5 @@
 #include <kern/e1000.h>
+#include <inc/stdio.h>
 
 #include <kern/pmap.h>
 #include <inc/string.h>
@@ -83,7 +84,7 @@ int e1000_try_send_packet(const char *buffer, size_t len)
 
 int e1000_recv_packet(char *buffer){
 
-	printf("hello");
+	printf("hello\n");
 
 	if(!(rx_desc[rdt].status & DD_BIT)) return -E_NO_RCV;
 
