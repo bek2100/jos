@@ -95,8 +95,6 @@ int e1000_recv_packet(char *buffer){
 	++rdt;
 	rdt = rdt % RX_COUNT;
 	bar0[RDT] = rdt;
-		cprintf("hello\n");
-
 
 	return rx_desc[rdt].length;
 }
