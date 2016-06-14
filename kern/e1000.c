@@ -52,7 +52,8 @@ int e1000_attach(struct pci_func *pcif)
 	bar0[RDLEN] = sizeof(rx_desc);
 
 	bar0[RDH] = 0;
-	bar0[RDT] = RX_COUNT + 1;
+	//bar0[RDT] = RX_COUNT + 1;
+	bar0[RDT] = 0;
 
 	bar0[RCTL] = 0x4000002;
 	bar0[IMS] = 0;
@@ -87,7 +88,6 @@ int e1000_recv_packet(char *buffer){
 	if(!(rx_desc[rdt].status & EOP_BIT)) panic("no long packet implemnted");
 
 	memcpy(buffer, &rx_buffers[rdt], rx_desc[rdt].length);
-	HEXDUMP("rx dump:", buffer, rx_desc[rdt].length);
 	rx_desc[rdt].status &= ~DD_BIT; 
 	rx_desc[rdt].status &= ~EOP_BIT; 
 
