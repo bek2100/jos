@@ -52,8 +52,11 @@ int e1000_attach(struct pci_func *pcif)
 	bar0[RDBAH] = 0;
 	bar0[RDLEN] = sizeof(rx_desc);
 
+	cprintf("RDLEN %d\n",bar0[RDLEN]);
+
+
 	bar0[RDH] = 0;
-	bar0[RDT] = RX_COUNT + 1;
+	bar0[RDT] = RX_COUNT;
 	//bar0[RDT] = 0;
 
 	bar0[RCTL] = 0x4000002;
