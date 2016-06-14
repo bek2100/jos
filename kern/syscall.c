@@ -432,7 +432,6 @@ sys_time_msec(void)
 static int
 sys_try_send_packet(const char* buffer, size_t len)
 {
-			cprintf("eiv hamood-2\n");
 	if (user_mem_check(curenv, buffer, len, PTE_U)) return -E_INVAL;
 		cprintf("eiv hamood2\n");
 	return e1000_try_send_packet(buffer, len);
@@ -442,6 +441,7 @@ static int
 sys_recv_packet(char *buffer)
 {
 	if ((uintptr_t) buffer >= UTOP) return -E_INVAL;
+		cprintf("eiv hamood4\n");
 	return e1000_recv_packet(buffer);
 }
 
