@@ -27,6 +27,5 @@ input(envid_t ns_envid)
 				sys_yield();
 			}
 			ipc_send(ns_envid, NSREQ_INPUT, &nsipcbuf ,perm);
-			cprintf("eiv hamood\n");
 		}
 }
