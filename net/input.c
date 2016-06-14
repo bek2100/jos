@@ -23,9 +23,10 @@ input(envid_t ns_envid)
 			int len;
 			int r;
 			while ((len = sys_recv_packet(buffer)) < 0){
-				cprintf("eiv hamood\n");
 				sys_yield();
 			}
+			cprintf("eiv hamood\n");
+
 			if(!len) len = RECV_SIZE -1;
 			while((r=sys_page_alloc(0, &nsipcbuf, perm))<0);
 			nsipcbuf.pkt.jp_len = len;
