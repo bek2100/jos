@@ -441,7 +441,6 @@ static int
 sys_recv_packet(char *buffer)
 {
 	if ((uintptr_t) buffer >= UTOP) return -E_INVAL;
-		cprintf("eiv hamood4\n");
 	return e1000_recv_packet(buffer);
 }
 
