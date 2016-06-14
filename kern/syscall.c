@@ -488,7 +488,7 @@ syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
 	case SYS_try_send_packet:
 		return sys_try_send_packet((const char*) a1, (size_t)a2);
 	case SYS_recv_packet:
-		return sys_recv_packet((char*) a1, (size_t)a2);
+		return sys_recv_packet((char*) a1);
 	default: 
 		return -E_INVAL;
 	}
