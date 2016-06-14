@@ -16,10 +16,10 @@ input(envid_t ns_envid)
 	// Hint: When you IPC a page to the network server, it will be
 	// reading from it for a while, so don't immediately receive
 	// another packet in to the same physical page.
-	char buffer[RECV_SIZE];
-	int perm = PTE_U | PTE_P | PTE_W;
 
 	for(;;){
+			char buffer[RECV_SIZE];
+			int perm = PTE_U | PTE_P | PTE_W;
 			int len;
 			int r;
 			while ((len = sys_recv_packet(buffer)) < 0){
