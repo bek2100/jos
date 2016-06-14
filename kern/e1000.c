@@ -67,8 +67,6 @@ int e1000_attach(struct pci_func *pcif)
 
 int e1000_try_send_packet(const char *buffer, size_t len)
 {
-		cprintf("eiv hamood-1\n");
-
 	if (len > TX_BUFFER_MAX) return -E_INVAL;
 
 	if (!(tx_desc[tdt].status & DD_BIT)) return -E_NO_MEM;
@@ -83,7 +81,6 @@ int e1000_try_send_packet(const char *buffer, size_t len)
 	++tdt;
 	tdt = tdt % TX_COUNT;
 	bar0[TDT] = tdt;
-	cprintf("eiv hamood1\n");
 	return 0;
 }
 
