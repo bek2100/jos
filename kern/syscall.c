@@ -433,7 +433,6 @@ static int
 sys_try_send_packet(const char* buffer, size_t len)
 {
 	if (user_mem_check(curenv, buffer, len, PTE_U)) return -E_INVAL;
-		cprintf("eiv hamood2\n");
 	return e1000_try_send_packet(buffer, len);
 }
 

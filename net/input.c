@@ -26,8 +26,6 @@ input(envid_t ns_envid)
 			while ((nsipcbuf.pkt.jp_len = sys_recv_packet(nsipcbuf.pkt.jp_data)) < 0){
 				sys_yield();
 			}
-				cprintf("eiv hamood3, len %d, buff %s\n", nsipcbuf.pkt.jp_len, nsipcbuf.pkt.jp_data);
 			ipc_send(ns_envid, NSREQ_INPUT, &nsipcbuf ,perm);
-				cprintf("eiv hamood0\n");
 		}
 }
