@@ -383,7 +383,7 @@ sys_ipc_try_send(envid_t envid, uint32_t value, void *srcva, unsigned perm)
 	}
 	
 	e->env_ipc_recving = 0;
-    	e->env_ipc_from = curenv->env_id;
+    e->env_ipc_from = curenv->env_id;
 	e->env_ipc_value = value;
 	e->env_status = ENV_RUNNABLE;
 
@@ -437,9 +437,9 @@ sys_try_send_packet(const char* buffer, size_t len)
 }
 
 static int
-sys_recv_packet(char *buffer, size_t len)
+sys_recv_packet(char *buffer)
 {
-	if (user_mem_check(curenv, buffer, len, PTE_U)) return -E_INVAL;
+	if ((uintptr_t) buffer >= UTOP) return -E_INVAL;
 	return e1000_recv_packet(buffer);
 }
 
