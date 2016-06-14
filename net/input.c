@@ -21,9 +21,10 @@ input(envid_t ns_envid)
 
 	for(;;){
 			int len;
-			while ((len=sys_recv_packet(buffer, RECV_SIZE -1)) == -E_NO_RCV)
-				sys_yield();
 			int r;
+			while ((len = sys_recv_packet(buffer)) < 0){
+				sys_yield();
+			}
 			while((r=sys_page_alloc(0, &nsipcbuf, perm))<0);
 			nsipcbuf.pkt.jp_len = len;
 			memcpy(nsipcbuf.pkt.jp_data, buffer, len);
