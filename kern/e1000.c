@@ -84,8 +84,6 @@ int e1000_try_send_packet(const char *buffer, size_t len)
 
 int e1000_recv_packet(char *buffer){
 
-	cprintf("hello\n");
-
 	if(!(rx_desc[rdt].status & DD_BIT)) return -E_NO_RCV;
 
 	if(!(rx_desc[rdt].status & EOP_BIT)) panic("no long packet implemnted");
@@ -97,6 +95,8 @@ int e1000_recv_packet(char *buffer){
 	++rdt;
 	rdt = rdt % RX_COUNT;
 	bar0[RDT] = rdt;
+		cprintf("hello\n");
+
 
 	return rx_desc[rdt].length;
 }
