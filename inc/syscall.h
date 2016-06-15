@@ -20,7 +20,6 @@ enum {
 	SYS_time_msec,
 	SYS_exec,
 	SYS_try_send_packet,
-	SYS_recv_packet,
 	NSYSCALLS
 };
 
