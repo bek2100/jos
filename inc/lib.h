@@ -61,7 +61,9 @@ int	sys_ipc_try_send(envid_t to_env, uint32_t value, void *pg, int perm);
 int	sys_ipc_recv(void *rcv_pg);
 unsigned int sys_time_msec(void);
 int	sys_exec(uintptr_t init_esp);
+
 int	sys_try_send_packet(const char* buffer, size_t len);
+int	sys_try_recv_packet(const char* buffer, size_t len, size_t *out_len);
 
 // This must be inlined.  Exercise for reader: why?
 static __inline envid_t __attribute__((always_inline))
@@ -157,7 +159,8 @@ void	wait(envid_t env);
 #define	O_EXCL		0x0400		/* error if already exists */
 #define O_MKDIR		0x0800		/* create directory, not regular file */
 
-//net.c
+// net.c
 int send_packet(struct jif_pkt *pkt);
+int recv_packet(struct jif_pkt *pkt);
 
 #endif	// !JOS_INC_LIB_H

@@ -38,5 +38,6 @@ typedef char rx_buffer_t[RX_BUFFER_MAX];
 
 int e1000_attach(struct pci_func *pcif);
 int e1000_try_send_packet(const char *buffer, size_t len);
+int e1000_try_recv_packet(char *buffer, size_t len, size_t *out_len);
 
 #endif	// JOS_KERN_E1000_H

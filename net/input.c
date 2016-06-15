@@ -1,7 +1,5 @@
 #include "ns.h"
-
-
-#define RECV_SIZE 2048
+#include <inc/lib.h>
 
 extern union Nsipc nsipcbuf;
 
@@ -17,15 +15,12 @@ input(envid_t ns_envid)
 	// reading from it for a while, so don't immediately receive
 	// another packet in to the same physical page.
 
-	for(;;){
-			char buffer[RECV_SIZE];
-			int perm = PTE_U | PTE_P | PTE_W;
-			int len;
-			int r;
-			while((r=sys_page_alloc(0, &nsipcbuf, perm))<0);
-			while ((nsipcbuf.pkt.jp_len = sys_recv_packet(nsipcbuf.pkt.jp_data)) < 0){
-				sys_yield();
-			}
-			ipc_send(ns_envid, NSREQ_INPUT, &nsipcbuf ,perm);
-		}
+	for (;;)
+	{
+		if (sys_page_alloc(0, &nsipcbuf, PTE_W|PTE_U|PTE_P) < 0) panic("page alloc");
+		nsipcbuf.pkt.jp_len = 2048;
+
+		if (recv_packet(&nsipcbuf.pkt) < 0) panic("recv");
+		ipc_send(ns_envid, NSREQ_INPUT, &nsipcbuf, PTE_W|PTE_U|PTE_P);
+	}
 }
