@@ -15,10 +15,9 @@ output(envid_t ns_envid)
 	{
 		envid_t e;
 		int perm;
-		if (ipc_recv(&e, UTEMP, &perm) == NSREQ_OUTPUT)
+		if (ipc_recv(&e, &nsipcbuf, &perm) == NSREQ_OUTPUT && e == ns_envid)
 		{
-			struct jif_pkt *pkt = (struct jif_pkt*)UTEMP;
-			if (send_packet(pkt)) panic("send");
+			if (send_packet(&nsipcbuf.pkt) < 0) panic("send");
 		}
 	}
 }

@@ -1,5 +1,5 @@
 #include <kern/e1000.h>
-#include <inc/stdio.h>
+#include <kern/e1000_consts.h>
 
 #include <kern/pmap.h>
 #include <inc/string.h>
@@ -31,7 +31,6 @@ int e1000_attach(struct pci_func *pcif)
 	{
 		memset(&rx_buffers[i], 0 , RX_BUFFER_MAX);
 		rx_desc[i].addr = PADDR(&rx_buffers[i]);
-		//rx_desc[i].length = RX_BUFFER_MAX;
 	}
 
 	bar0[TDBAL] = PADDR(tx_desc);
@@ -43,8 +42,6 @@ int e1000_attach(struct pci_func *pcif)
 	bar0[TCTL] = 0x4010A;
 	bar0[TIPG] = 0x60200A;
 
-	//uint8_t mac[6] = {0x52, 0x54, 0x00, 0x12, 0x34, 0x56};
-	//for (i = 0x1480; i < 0x1500; ++i) bar0[i] = 0;
 	bar0[RAL] = 0x12005452;
 	bar0[RAH] = 0x80005634;
 
@@ -52,15 +49,11 @@ int e1000_attach(struct pci_func *pcif)
 	bar0[RDBAH] = 0;
 	bar0[RDLEN] = sizeof(rx_desc);
 
-	cprintf("RDLEN %d\n",bar0[RDLEN]);
-
-
 	bar0[RDH] = 0;
-	bar0[RDT] = RX_COUNT + 1;
-	//bar0[RDT] = 0;
+	bar0[RDT] = RX_COUNT - 1;
 
-	bar0[RCTL] = 0x4000002;
 	bar0[IMS] = 0;
+	bar0[RCTL] = 0x4000002;
 
 	return 0;
 }
@@ -69,7 +62,7 @@ int e1000_try_send_packet(const char *buffer, size_t len)
 {
 	if (len > TX_BUFFER_MAX) return -E_INVAL;
 
-	if (!(tx_desc[tdt].status & DD_BIT)) return -E_NO_MEM;
+	if (!(tx_desc[tdt].status & DD_BIT)) return -E_NOT_READY;
 
 	memcpy(&tx_buffers[tdt], buffer, len);
 	memset(&tx_desc[tdt], 0, sizeof(tx_desc[tdt]));
@@ -81,26 +74,25 @@ int e1000_try_send_packet(const char *buffer, size_t len)
 	++tdt;
 	tdt = tdt % TX_COUNT;
 	bar0[TDT] = tdt;
+
 	return 0;
 }
 
-int e1000_recv_packet(char *buffer){
+int e1000_try_recv_packet(char *buffer, size_t len, size_t *out_len)
+{
+	if (!out_len || len > RX_BUFFER_MAX) return -E_INVAL;
 
-	if(!(rx_desc[rdt].status & DD_BIT)) return -E_NO_RCV;
+	if (!(rx_desc[rdt].status & DD_BIT)) return -E_NOT_READY;
 
-	if(!(rx_desc[rdt].status & EOP_BIT)) panic("no long packet implemnted");
+	*out_len = rx_desc[rdt].length;
+	memcpy(buffer, &rx_buffers[rdt], *out_len);
 
-	int len = rx_desc[rdt].length;
-
-	memcpy(buffer, &rx_buffers[rdt], len);
-	rx_desc[rdt].status = 0; 
+	memset(&rx_desc[rdt], 0, sizeof(rx_desc[rdt]));
+	rx_desc[rdt].addr = PADDR(&rx_buffers[rdt]);
 
 	bar0[RDT] = rdt;
 	++rdt;
 	rdt = rdt % RX_COUNT;
 
-	return len;
+	return 0;
 }
-
-
-

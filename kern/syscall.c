@@ -383,7 +383,7 @@ sys_ipc_try_send(envid_t envid, uint32_t value, void *srcva, unsigned perm)
 	}
 	
 	e->env_ipc_recving = 0;
-    e->env_ipc_from = curenv->env_id;
+    	e->env_ipc_from = curenv->env_id;
 	e->env_ipc_value = value;
 	e->env_status = ENV_RUNNABLE;
 
@@ -437,10 +437,10 @@ sys_try_send_packet(const char* buffer, size_t len)
 }
 
 static int
-sys_recv_packet(char *buffer)
+sys_try_recv_packet(char* buffer, size_t len, size_t *out_len)
 {
-	if ((uintptr_t) buffer >= UTOP) return -E_INVAL;
-	return e1000_recv_packet(buffer);
+	if (user_mem_check(curenv, buffer, len, PTE_U)) return -E_INVAL;
+	return e1000_try_recv_packet(buffer, len, out_len);
 }
 
 // Dispatches to the correct kernel function, passing the arguments.
@@ -487,8 +487,8 @@ syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
 		return sys_time_msec();
 	case SYS_try_send_packet:
 		return sys_try_send_packet((const char*) a1, (size_t)a2);
-	case SYS_recv_packet:
-		return (int32_t)sys_recv_packet((char*) a1);
+	case SYS_try_recv_packet:
+		return sys_try_recv_packet((char*) a1, (size_t)a2, (size_t*)a3);
 	default: 
 		return -E_INVAL;
 	}
