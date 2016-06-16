@@ -321,8 +321,8 @@ trap_dispatch(struct Trapframe *tf)
 		tf->tf_regs.reg_eax = ans;
 		} break;
 	case IRQ_OFFSET + IRQ_TIMER: {
-		if (cpunum() == 0) time_tick();
 		lapic_eoi();
+		if (cpunum() == 0) time_tick();
 		sched_yield();
 	}
 	case IRQ_OFFSET + IRQ_KBD: {
