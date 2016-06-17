@@ -34,7 +34,7 @@ int e1000_attach(struct pci_func *pcif)
 	for (i = 0; i < TX_COUNT; ++i)
 	{
 		tx_desc[i].status |= DD_BIT;
-	}
+		tx_desc[tdt].cmd |= RS_BIT;	}
 
 	for (i = 0; i < RX_COUNT; ++i)
 	{
