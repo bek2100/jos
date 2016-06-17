@@ -331,7 +331,7 @@ trap_dispatch(struct Trapframe *tf)
 	case IRQ_OFFSET + IRQ_SERIAL: {
 		serial_intr();
 	} break;
-	case IRQ_OFFSET + e1000_get_irq(): {
+	case IRQ_OFFSET + (int)e1000_get_irq(): {
 		e1000_intr();
 		lapic_eoi();
 	} break;
