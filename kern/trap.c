@@ -304,8 +304,8 @@ trap_dispatch(struct Trapframe *tf)
 	// LAB 5: Your code here.
 
 	if (tf->tf_trapno == IRQ_OFFSET + e1000_get_irq()) {
-		e1000_intr();
 		lapic_eoi();
+		e1000_intr();
 		return;
 	}
 
