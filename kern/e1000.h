@@ -38,10 +38,13 @@ typedef char rx_buffer_t[RX_BUFFER_MAX];
 
 uint32_t e1000_get_mac_low();
 uint32_t e1000_get_mac_high();
+uint8_t e1000_get_irq();
+
 
 #define HEAD_SIZE 4
 int e1000_attach(struct pci_func *pcif);
 int e1000_try_send_packet(const char *buffer, size_t len);
 int e1000_try_recv_packet(void *page, size_t *out_len);
+void e1000_intr();
 
 #endif	// JOS_KERN_E1000_H

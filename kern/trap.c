@@ -14,6 +14,7 @@
 #include <kern/cpu.h>
 #include <kern/spinlock.h>
 #include <kern/time.h>
+#include <kern/e1000.h>
 
 //static struct Taskstate ts;
 
@@ -329,6 +330,10 @@ trap_dispatch(struct Trapframe *tf)
 	} break;
 	case IRQ_OFFSET + IRQ_SERIAL: {
 		serial_intr();
+	} break;
+	case IRQ_OFFSET + e1000_get_irq()) {
+		e1000_intr();
+		lapic_eoi();
 	} break;
 	default: {
 		// Unexpected trap: The user process or the kernel has a bug.

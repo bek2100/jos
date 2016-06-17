@@ -1,5 +1,6 @@
 #include <kern/e1000.h>
 #include <kern/e1000_consts.h>
+#include <kern/picirq.h>
 
 #include <kern/pmap.h>
 #include <kern/env.h>
@@ -19,11 +20,15 @@ uint32_t mac_high = -1;
 
 uint32_t e1000_get_mac_low()  {return mac_low;}
 uint32_t e1000_get_mac_high() {return mac_high;}
+uint8_t irq = 0;
+uint8_t e1000_get_irq() {return irq;}
 
 int e1000_attach(struct pci_func *pcif)
 {
 	pci_func_enable(pcif);
 	bar0 = mmio_map_region(pcif->reg_base[0], pcif->reg_size[0]);
+	irq = pcif->irq_line;
+	irq_setmask_8259A(irq_mask_8259A & ~( 1 << pcif->irq_line));
 
 	uint32_t i;
 	for (i = 0; i < TX_COUNT; ++i)
@@ -70,7 +75,7 @@ int e1000_attach(struct pci_func *pcif)
 	bar0[RDH] = 0;
 	bar0[RDT] = RX_COUNT - 1;
 
-	bar0[IMS] = 0;
+	bar0[IMS] = 1;
 
 	bar0[TCTL] = 0x4010A;
 	bar0[RCTL] = 0x4000002;
@@ -125,3 +130,10 @@ int e1000_try_recv_packet(void *page, size_t *out_len)
 
 	return 0;
 }
+
+void e1000_intr()
+{
+	cprintf("e1000 INTR %d %d\n", bar0[IMS], bar0[ICR]);
+	cprintf("2nd: e1000 INTR %d %d\n", bar0[IMS], bar0[ICR]);
+}
+
