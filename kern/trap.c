@@ -279,7 +279,6 @@ print_regs(struct PushRegs *regs)
 static void
 trap_dispatch(struct Trapframe *tf)
 {
-	int e1000_offset = e1000_get_irq();
 	// Handle processor exceptions.
 
 	// Handle spurious interrupts
@@ -303,6 +302,12 @@ trap_dispatch(struct Trapframe *tf)
 
 	// Handle keyboard and serial interrupts.
 	// LAB 5: Your code here.
+
+	if (tf->tf_trapno == IRQ_OFFSET + e1000_get_irq()) {
+		e1000_intr();
+		lapic_eoi();
+		return;
+	}
 
 	switch (tf->tf_trapno)
 	{
@@ -331,10 +336,6 @@ trap_dispatch(struct Trapframe *tf)
 	} break;
 	case IRQ_OFFSET + IRQ_SERIAL: {
 		serial_intr();
-	} break;
-	case IRQ_OFFSET + e1000_offset: {
-		e1000_intr();
-		lapic_eoi();
 	} break;
 	default: {
 		// Unexpected trap: The user process or the kernel has a bug.
