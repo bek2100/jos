@@ -2,6 +2,8 @@
 #include <kern/e1000_consts.h>
 
 #include <kern/pmap.h>
+#include <kern/env.h>
+
 #include <inc/string.h>
 
 volatile uint32_t *bar0 = NULL;
@@ -9,11 +11,14 @@ volatile uint32_t *bar0 = NULL;
 struct tx_desc_t tx_desc[TX_COUNT] = {{0}};
 struct rx_desc_t rx_desc[RX_COUNT] = {{0}};
 
-tx_buffer_t tx_buffers[TX_COUNT] = {{0}};
-rx_buffer_t rx_buffers[RX_COUNT] = {{0}};
-
 uint32_t tdt = 0;
 uint32_t rdt = 0;
+
+uint32_t mac_low  = -1;
+uint32_t mac_high = -1;
+
+uint32_t e1000_get_mac_low()  {return mac_low;}
+uint32_t e1000_get_mac_high() {return mac_high;}
 
 int e1000_attach(struct pci_func *pcif)
 {
@@ -23,15 +28,29 @@ int e1000_attach(struct pci_func *pcif)
 	uint32_t i;
 	for (i = 0; i < TX_COUNT; ++i)
 	{
-		memset(&tx_buffers[i], 0 , TX_BUFFER_MAX);
 		tx_desc[i].status |= DD_BIT;
 	}
 
 	for (i = 0; i < RX_COUNT; ++i)
 	{
-		memset(&rx_buffers[i], 0 , RX_BUFFER_MAX);
-		rx_desc[i].addr = PADDR(&rx_buffers[i]);
+	        struct PageInfo *pp = page_alloc(1);
+	        if (!pp) return -E_NO_MEM;
+
+		++pp->pp_ref;
+		rx_desc[i].addr = page2pa(pp) + HEAD_SIZE;
 	}
+
+	bar0[EERD] = EERD_START | (0 << EERD_ADDR_START);
+	while (!((i = bar0[EERD]) & EERD_DONE)) ;
+	mac_low = (i >> EERD_DATA_START);
+
+	bar0[EERD] = EERD_START | (1 << EERD_ADDR_START);
+	while (!((i = bar0[EERD]) & EERD_DONE)) ;
+	mac_low |= (i >> EERD_DATA_START) << 16;
+
+	bar0[EERD] = EERD_START | (2 << EERD_ADDR_START);
+	while (!((i = bar0[EERD]) & EERD_DONE)) ;
+	mac_high = (i >> EERD_DATA_START);
 
 	bar0[TDBAL] = PADDR(tx_desc);
 	bar0[TDBAH] = 0;
@@ -39,11 +58,10 @@ int e1000_attach(struct pci_func *pcif)
 
 	bar0[TDH] = bar0[TDT] = 0;
 
-	bar0[TCTL] = 0x4010A;
 	bar0[TIPG] = 0x60200A;
 
-	bar0[RAL] = 0x12005452;
-	bar0[RAH] = 0x80005634;
+	bar0[RAL] = mac_low;
+	bar0[RAH] = mac_high | (1<<31);
 
 	bar0[RDBAL] = PADDR(rx_desc);
 	bar0[RDBAH] = 0;
@@ -53,6 +71,8 @@ int e1000_attach(struct pci_func *pcif)
 	bar0[RDT] = RX_COUNT - 1;
 
 	bar0[IMS] = 0;
+
+	bar0[TCTL] = 0x4010A;
 	bar0[RCTL] = 0x4000002;
 
 	return 0;
@@ -64,10 +84,12 @@ int e1000_try_send_packet(const char *buffer, size_t len)
 
 	if (!(tx_desc[tdt].status & DD_BIT)) return -E_NOT_READY;
 
-	memcpy(&tx_buffers[tdt], buffer, len);
+	struct PageInfo *pp = page_lookup(curenv->env_pgdir, (char*)buffer, NULL);
+	if (!pp) return -E_INVAL;
+
 	memset(&tx_desc[tdt], 0, sizeof(tx_desc[tdt]));
 
-	tx_desc[tdt].addr = PADDR(&tx_buffers[tdt]);
+	tx_desc[tdt].addr = page2pa(pp) + PGOFF(buffer);
 	tx_desc[tdt].length = len;
 	tx_desc[tdt].cmd |= RS_BIT | TCP_BIT;
 
@@ -78,17 +100,24 @@ int e1000_try_send_packet(const char *buffer, size_t len)
 	return 0;
 }
 
-int e1000_try_recv_packet(char *buffer, size_t len, size_t *out_len)
+int e1000_try_recv_packet(void *page, size_t *out_len)
 {
-	if (!out_len || len > RX_BUFFER_MAX) return -E_INVAL;
+	if (!out_len) return -E_INVAL;
 
 	if (!(rx_desc[rdt].status & DD_BIT)) return -E_NOT_READY;
 
+	struct PageInfo *pp = pa2page(rx_desc[rdt].addr);
+	if (page_insert(curenv->env_pgdir, pp, page ,PTE_W|PTE_U|PTE_P) < 0) return -E_NO_MEM;
+	page_decref(pp);
+
 	*out_len = rx_desc[rdt].length;
-	memcpy(buffer, &rx_buffers[rdt], *out_len);
 
 	memset(&rx_desc[rdt], 0, sizeof(rx_desc[rdt]));
-	rx_desc[rdt].addr = PADDR(&rx_buffers[rdt]);
+
+	pp = page_alloc(1);
+	if (!pp) return -E_NO_MEM;
+	rx_desc[rdt].addr = page2pa(pp) + HEAD_SIZE;
+	++pp->pp_ref;
 
 	bar0[RDT] = rdt;
 	++rdt;

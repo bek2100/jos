@@ -28,6 +28,7 @@ enum {
 
 	// network
 	E_NOT_READY	,
+	E_TIMEOUT	,
 
 	MAXERROR
 };

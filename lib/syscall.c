@@ -157,7 +157,19 @@ sys_try_send_packet(const char* buffer, size_t len)
 }
 
 int
-sys_try_recv_packet(const char* buffer, size_t len, size_t *out_len)
+sys_try_recv_packet(void *page, size_t *out_len)
 {
-	return syscall(SYS_try_recv_packet, 0, (uint32_t)buffer, len, (uint32_t)out_len, 0 ,0);
+	return syscall(SYS_try_recv_packet, 0, (uint32_t)page, (uint32_t)out_len, 0 ,0 ,0);
+}
+
+uint32_t
+sys_get_mac_low()
+{
+	return syscall(SYS_get_mac_low, 0, 0, 0, 0, 0 ,0);
+}
+
+uint32_t
+sys_get_mac_high()
+{
+	return syscall(SYS_get_mac_high, 0, 0, 0, 0, 0 ,0);
 }

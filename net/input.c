@@ -17,10 +17,7 @@ input(envid_t ns_envid)
 
 	for (;;)
 	{
-		if (sys_page_alloc(0, &nsipcbuf, PTE_W|PTE_U|PTE_P) < 0) panic("page alloc");
-		nsipcbuf.pkt.jp_len = 2048;
-
-		if (recv_packet(&nsipcbuf.pkt) < 0) panic("recv");
+		if (recv_packet(&nsipcbuf.pkt, INFINIT) < 0) panic("recv");
 		ipc_send(ns_envid, NSREQ_INPUT, &nsipcbuf, PTE_W|PTE_U|PTE_P);
 	}
 }

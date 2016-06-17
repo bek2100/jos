@@ -437,12 +437,22 @@ sys_try_send_packet(const char* buffer, size_t len)
 }
 
 static int
-sys_try_recv_packet(char* buffer, size_t len, size_t *out_len)
+sys_try_recv_packet(void *page, size_t *out_len)
 {
-	if (user_mem_check(curenv, buffer, len, PTE_U)) return -E_INVAL;
-	return e1000_try_recv_packet(buffer, len, out_len);
+	return e1000_try_recv_packet(page, out_len);
 }
 
+static int
+sys_get_mac_low()
+{
+	return e1000_get_mac_low();
+}
+
+static int
+sys_get_mac_high()
+{
+	return e1000_get_mac_high();
+}
 // Dispatches to the correct kernel function, passing the arguments.
 int32_t
 syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, uint32_t a5)
@@ -488,7 +498,11 @@ syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
 	case SYS_try_send_packet:
 		return sys_try_send_packet((const char*) a1, (size_t)a2);
 	case SYS_try_recv_packet:
-		return sys_try_recv_packet((char*) a1, (size_t)a2, (size_t*)a3);
+		return sys_try_recv_packet((char*) a1, (size_t*)a2);
+	case SYS_get_mac_low:
+		return sys_get_mac_low();
+	case SYS_get_mac_high:
+		return sys_get_mac_high();
 	default: 
 		return -E_INVAL;
 	}

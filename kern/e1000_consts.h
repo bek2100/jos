@@ -9,6 +9,12 @@
 #define RS_BIT   (1<<3)
 #define EOP_BIT  (1<<1)
 
+#define EERD  0x5
+#define EERD_START      (1<<0)
+#define EERD_DONE       (1<<4)
+#define EERD_ADDR_START 8
+#define EERD_DATA_START 16
+
 #define TDBAL 0xe00
 #define TDBAH 0xe01
 #define TDLEN 0xe02

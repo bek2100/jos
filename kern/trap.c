@@ -302,7 +302,6 @@ trap_dispatch(struct Trapframe *tf)
 	// Handle keyboard and serial interrupts.
 	// LAB 5: Your code here.
 
-		//print_trapframe(tf);
 	switch (tf->tf_trapno)
 	{
 	case T_PGFLT: {

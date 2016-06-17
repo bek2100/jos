@@ -21,6 +21,8 @@ enum {
 	SYS_exec,
 	SYS_try_send_packet,
 	SYS_try_recv_packet,
+	SYS_get_mac_low,
+	SYS_get_mac_high,
 	NSYSCALLS
 };
 

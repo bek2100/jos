@@ -1,4 +1,10 @@
 1.How did you structure your transmit implementation? In particular, what do you do if the transmit ring is full?
+
+
 2. How did you structure your receive implementation? In particular, what do you do if the receive queue is empty and a user environment requests the next incoming packet?
+
+
 3. What does the web page served by JOS's web server say?
+
+
 4. How long approximately did it take you to do this lab?

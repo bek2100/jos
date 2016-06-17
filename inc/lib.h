@@ -63,7 +63,10 @@ unsigned int sys_time_msec(void);
 int	sys_exec(uintptr_t init_esp);
 
 int	sys_try_send_packet(const char* buffer, size_t len);
-int	sys_try_recv_packet(const char* buffer, size_t len, size_t *out_len);
+int	sys_try_recv_packet(void *page, size_t *out_len);
+
+uint32_t sys_get_mac_low();
+uint32_t sys_get_mac_high();
 
 // This must be inlined.  Exercise for reader: why?
 static __inline envid_t __attribute__((always_inline))
@@ -160,7 +163,8 @@ void	wait(envid_t env);
 #define O_MKDIR		0x0800		/* create directory, not regular file */
 
 // net.c
-int send_packet(struct jif_pkt *pkt);
-int recv_packet(struct jif_pkt *pkt);
+#define INFINIT (-1)
+int send_packet(struct jif_pkt *pkt, unsigned int time_out_msec);
+int recv_packet(struct jif_pkt *pkt, unsigned int time_out_msec);
 
 #endif	// !JOS_INC_LIB_H

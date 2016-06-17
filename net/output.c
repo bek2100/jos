@@ -17,7 +17,7 @@ output(envid_t ns_envid)
 		int perm;
 		if (ipc_recv(&e, &nsipcbuf, &perm) == NSREQ_OUTPUT && e == ns_envid)
 		{
-			if (send_packet(&nsipcbuf.pkt) < 0) panic("send");
+			if (send_packet(&nsipcbuf.pkt, INFINIT) < 0) panic("send");
 		}
 	}
 }
