@@ -8,6 +8,7 @@
 #define TCP_BIT  (1<<0)
 #define RS_BIT   (1<<3)
 #define EOP_BIT  (1<<1)
+#define IDE_BIT  (1<<7)
 
 #define EERD  0x5
 #define EERD_START      (1<<0)

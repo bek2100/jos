@@ -96,7 +96,7 @@ int e1000_try_send_packet(const char *buffer, size_t len)
 
 	tx_desc[tdt].addr = page2pa(pp) + PGOFF(buffer);
 	tx_desc[tdt].length = len;
-	tx_desc[tdt].cmd |= RS_BIT | TCP_BIT;
+	tx_desc[tdt].cmd |= RS_BIT | TCP_BIT | IDE_BIT;
 
 	++tdt;
 	tdt = tdt % TX_COUNT;
