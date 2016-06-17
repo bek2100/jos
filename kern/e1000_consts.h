@@ -34,6 +34,7 @@
 #define RDT   0xa06
 
 #define ICR   0x30
+#define ICS   0x32
 #define RCTL  0x40
 #define IMS   0x34
 
