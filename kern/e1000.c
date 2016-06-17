@@ -134,6 +134,6 @@ int e1000_try_recv_packet(void *page, size_t *out_len)
 void e1000_intr()
 {
 	cprintf("e1000 INTR %d %d\n", bar0[IMS], bar0[ICR]);
-	bar0[ICS] = 1;
+	irq_setmask_8259A(irq_mask_8259A & ~( 1 << pcif->irq_line));
 }
 
