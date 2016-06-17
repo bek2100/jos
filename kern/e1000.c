@@ -138,6 +138,7 @@ void e1000_intr()
 	for (i = 0; i < TX_COUNT; ++i)
 	{
 		if(tx_desc[i].status |= DD_BIT){
+			struct PageInfo *pp = pa2page(tx_desc[i].addr);
 			if (page_insert(curenv->env_pgdir, page2pa(pp), pp ,PTE_W|PTE_P|PTE_U) < 0) return -E_NO_MEM;
 		}
 	}
