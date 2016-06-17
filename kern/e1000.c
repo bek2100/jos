@@ -75,7 +75,7 @@ int e1000_attach(struct pci_func *pcif)
 	bar0[RDH] = 0;
 	bar0[RDT] = RX_COUNT - 1;
 
-	bar0[IMS] = 2;
+	bar0[IMS] = 1;
 
 	bar0[TCTL] = 0x4010A;
 	bar0[RCTL] = 0x4000002;
@@ -133,7 +133,6 @@ int e1000_try_recv_packet(void *page, size_t *out_len)
 
 void e1000_intr()
 {
-	cprintf("e1000 INTR %d %d\n", bar0[IMS], bar0[ICR]);
-	cprintf("2nd: e1000 INTR %d %d\n", bar0[IMS], bar0[ICR]);
+	cprintf("e1000 INTR %d\n", bar0[IMS]);
 }
 
