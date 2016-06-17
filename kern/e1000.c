@@ -93,8 +93,9 @@ int e1000_try_send_packet(const char *buffer, size_t len)
 	if (!pp) return -E_INVAL;
 
 	memset(&tx_desc[tdt], 0, sizeof(tx_desc[tdt]));
-
+	if (page_insert(curenv->env_pgdir, page2pa(pp), pp ,PTE_W|PTE_P) < 0) return -E_NO_MEM;
 	tx_desc[tdt].addr = page2pa(pp) + PGOFF(buffer);
+	++pp->pp_ref;
 	tx_desc[tdt].length = len;
 	tx_desc[tdt].cmd |= RS_BIT | TCP_BIT;
 
@@ -134,5 +135,11 @@ int e1000_try_recv_packet(void *page, size_t *out_len)
 void e1000_intr()
 {
 	cprintf("e1000 INTR %d %d %d\n", bar0[IMS], bar0[ICR], bar0[ICR]);
+	for (i = 0; i < TX_COUNT; ++i)
+	{
+		if(tx_desc[i].status |= DD_BIT){
+			if (page_insert(curenv->env_pgdir, page2pa(pp), pp ,PTE_W|PTE_P|PTE_U) < 0) return -E_NO_MEM;
+		}
+	}
 }
 
