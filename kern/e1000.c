@@ -76,7 +76,6 @@ int e1000_attach(struct pci_func *pcif)
 	bar0[RDT] = RX_COUNT - 1;
 
 	bar0[IMS] = 1;
-	bar0[ICR] = 2;
 
 	bar0[TCTL] = 0x4010A;
 	bar0[RCTL] = 0x4000002;
