@@ -28,7 +28,7 @@ int e1000_attach(struct pci_func *pcif)
 	pci_func_enable(pcif);
 	bar0 = mmio_map_region(pcif->reg_base[0], pcif->reg_size[0]);
 	irq = pcif->irq_line;
-	irq_setmask_8259A(irq_mask_8259A & ~( 1 << pcif->irq_line));
+	irq_setmask_8259A(irq_mask_TXDW & ~( 1 << pcif->irq_line));
 
 	uint32_t i;
 	for (i = 0; i < TX_COUNT; ++i)
