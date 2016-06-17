@@ -305,7 +305,7 @@ trap_dispatch(struct Trapframe *tf)
 
 	if (tf->tf_trapno == IRQ_OFFSET + e1000_get_irq()) {
 		lapic_eoi();
-		cprintf("hello\n");
+		cprintf("1:e1000 INTR %d %d\n", bar0[IMS], bar0[ICR]);
 		e1000_intr();
 		return;
 	}
