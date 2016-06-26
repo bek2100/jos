@@ -1,0 +1,107 @@
+=== This template file contains questions you need to answer.
+=== Fill your answers on appropriate blank lines only.
+=== Don't start any line with three equal signs "===".
+=== Don't edit any lines starting from three equal signs.
+=== Use C notation to write numbers: 42 for decimal, 0x2a for hexadecimal.
+=== We may check most of the answers automatically, so "forty two" or
+=== "26+16" won't work for this example. Spaces are mostly ignored, so
+=== "  42  " is OK (without quotes of course). 
+=== When asked to specify address & instruction, do it in the form of
+=== gdb output "ADDRESS: INSTRUCTION", for example "0x7c26:  or  $0x1,%eax"
+=== Don't make lines longer than 80 characters. You don't need to fit your
+=== answer in a single line, you can start a new line at will.
+=== However, when asked to fill "a table" make each table raw a single line.
+
+=== How did you structure your transmit implementation? In particular, what do you do if the transmit ring is full?
+The user send a buffer through a lib function that calls a system call.
+The system call (originaly copies the data to an inner buffer, but now uses
+zero-copy) send the address to the network card if there is place or fail if
+there is no space. If it failes, the lib function is spinning, trying to send
+until it succeed or reach (optional) timeout.
+
+The idea is very similar to ipc_recv.
+
+In fact, we don't really use the timeout in the net server, but we want to give
+the option.
+
+=== How did you structure your receive implementation? In particular, what do you do if the receive queue is empty and a user environment requests the next incoming packet?
+Almost identical to transmit.
+
+(new in zero-copy)
+Instead of sending a buffer, the user sends a va of page. The driver alocates a
+page to that address and writes the packet from the fourth byte (see
+explaination in next section).
+The system call also returns the size of the packet.
+
+Like in transmit, the lib function spins with an optional timeout. In this spin
+we do sys_sched_yeild in order to let other processes run. We add the timeout
+because this operation may take a long time so we want letting the user decide
+when it take too much time and maybe try again later. (For example sleeping
+from user space for few seconds or minutes.)
+
+=== What does the web page served by JOS's web server say?
+This file came from JOS.
+Cheesy web page!
+
+=== How long approximately did it take you to do this lab? 
+about a week
+
+====================================================================
+=== Q What challenge(s) have you chosen to implement? (specify
+===   challenge numbers separated by spaces, if more than one)
+1 2
+
+=== Q If the challenge requires changing the kernel source, list the
+===   files which you have changed/added during implementation.
+===   (one file per line, relative to lab directory containing .git/)
+inc/lib.h
+inc/syscall.h
+kern/e1000.c
+kern/e1000.h
+kern/e1000_consts.h
+kern/syscall.c
+lib/syscall.c
+net/lwip/jos/jif/jif.c
+net/input.c
+
+=== Q Describe you solution.
+===   (free form, up to 500 words, don't need to use all 500!)
+1.
+We read the mac address from the EEPROM. In order to read from the EEPROM, we
+use the EERD register. We write to that register the address in EEPROM we want
+and a bit indicating we want to read. After that, we spin, read from the same
+register until the DONE bit is on. The data is in the upper half of the
+register.
+
+We read the mac address in 3 parts of 16 bits and save it in 2 parts of 32
+bits. We use this value to init the RAL/RAH registers. We also added 2 syscalls
+for retrieving these values and let lwip use the correct mac address.
+
+2.
+We add zero-copy mechanism for both transmiting and recieving.
+
+For transmiting: the interface remains the same. The user sends a buffer to the
+syscall, but instead of copying it, the driver gives the NIC the original
+buffer. There is no protection on the buffer, and it's the user responsibilty
+to not change it while it's in use. (He may add logic to the program to
+identify answer packet or something similar.)
+
+Another possible solution (which we didn't implemented) is to remove user
+permissions from the page and restore it when the NIC done. In order to do
+this, we need to raise interrupt when the packet arrive and restore it from
+there. To complete the solution we also need a signaling mechanism for letting
+the user understand the transmit is finished.
+
+For recieving: the driver allocated physical pages for the NIC to use.
+When the user ask for a recieved buffer, he supplies a va of the target page.
+The driver maps the physical page to that address and allocates a new page to
+the NIC.
+
+There is no race because we mapping the page to the user only after the NIC is
+done with this page.
+
+Because the user use a struct of a packet which contains the length, we make
+the NIC write only from the fourth byte (the length of size var). We wanted to
+make flexible head size (saving bigger buffer and let the user decide how to
+use it) but this struct assumed to be page aligned so we skip only 4 bytes.
+

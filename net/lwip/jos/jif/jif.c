@@ -62,7 +62,7 @@ low_level_init(struct netif *netif)
 
     // MAC address is hardcoded to eliminate a system call
     ((uint32_t*)netif->hwaddr)[0] = sys_get_mac_low(); 
-    ((uint32_t*)netif->hwaddr)[1] = sys_get_mac_high(); 
+    ((uint16_t*)netif->hwaddr)[2] = (uint16_t)sys_get_mac_high(); 
 }
 
 /*
